@@ -1,0 +1,552 @@
+# The Hackable Everything Field Guide
+
+**Robots, toys, vacuums, home appliances, musical instruments, cameras, consoles, radios, screens, and forgotten hardware with controllable potential**
+
+**Edition:** 12 October 2026  
+**Focus:** affordable second-hand devices, robotics embodiment, local control, and a physical voice assistant / “Siri replacement” inspired by Furby Connect and [fluffkit](https://github.com/taituo/fluffkit).  
+**Scope:** things controllable through **documented APIs**, BLE/IR/serial commands, app replacements, cloud substitutes, alternative firmware, debugging, or actual rewiring. You do **not** have to replace firmware to count.
+
+> **Reality check:** This is a research and thrift-hunting catalog, **not** a guarantee every production revision can be hacked. Names, chipsets, region, firmware version, hardware revision, and account requirements matter. `Documented` means there is an existing published route, **not** that it has been independently tested for this guide. `Experimental` means a research lead or substantial custom work. Links point to project documentation, known examples, or the ecosystem to investigate; check the exact model before buying.
+
+## How to read the catalog
+
+- **S / Software:** app, API, local network control, USB, BLE, serial, IR, or cloud replacement; stock firmware often stays intact.
+- **F / Firmware:** flash alternative firmware, patch software on the device, jailbreak, bootloader or BIOS change.
+- **H / Hardware:** open device, solder, add a microcontroller, change a PCB, use UART/JTAG/SWD, or replace electronics.
+- **E / Experimental:** useful lead, but requires protocol work, an exact rare variant, or has incomplete support.
+- **Difficulty:** `1` beginner, `2` tinkerer, `3` established maker, `4` advanced firmware/reverse engineering, `5` high-risk or specialist. This is a rough subjective estimate.
+- **Body potential:** `face`, `voice`, `mobile`, `arm`, `sensor`, `ambient`, `mechanism`, `platform`, or `none`. A device can have multiple roles; the catalog names the best one.
+- **Cost:** no live prices are asserted. For scavenging, treat `€` as likely inexpensive *used* or salvage, `€€` as variable, `€€€` as usually a substantial purchase; availability differs dramatically by country. Check completed local resale listings, not just asking prices.
+
+**Safety and sanity:** Only work on devices you own or are authorized to change. Keep hazardous mains-powered appliances closed unless you're trained to work on them; prefer stock APIs or low-voltage isolated interfaces. Disable motion, heating, suction, blades, lasers, and other dangerous outputs while developing. Do not bypass speed, battery, thermal, or protective interlocks. Disconnect motors when testing first-generation robot brains. Keep IoT devices on an isolated network, and never expose unauthenticated robot or voice APIs to the internet. A `Valetudo` robot is not an unrestricted safe autonomous robot; maps and collision avoidance require careful validation.
+
+## Best starting points for embodied AI (subjective shortlist)
+
+| Rank | Target | Why it's exciting | First route | Typical hunt |
+|---:|---|---|---|---|
+| 1 | **Furby Connect 2016** | Fur, face, beak, sound, sensors; ideal personality shell | [fluffkit](https://github.com/taituo/fluffkit), [PyFluff](https://github.com/martinwoodward/PyFluff) | €€ used |
+| 2 | **WowWee MiP** | Self-balancing mobile robot with published BLE command protocol | [MiP-BLE-Protocol](https://github.com/WowWeeLabs/MiP-BLE-Protocol) | €–€€ used |
+| 3 | **Older Roomba 500/600 / Create 2** | Strong mobile chassis, encoders, bump sensors, serial commands | [Open Interface example](https://github.com/alphagopher/roomba600_open_interface) | €€ used |
+| 4 | **Cozmo** | Animated face, tracks, lift, camera, established Python libraries | [PyCozmo](https://github.com/zayfod/pycozmo) | €€–€€€ used |
+| 5 | **Anki Vector** | Face, audio, autonomy, local voice-server ecosystem | [wire-pod](https://github.com/kercre123/wire-pod) | €€–€€€ used |
+| 6 | **LEGO Powered Up / BOOST / SPIKE hubs** | Modular motors and sensors; build your own physical form | [Pybricks](https://pybricks.com/) | €€ used |
+| 7 | **Sphero Mini / BOLT** | Small robust movement, lights, BLE SDKs | [spherov2](https://spherov2.readthedocs.io/en/latest/) | €–€€ used |
+| 8 | **OpenEPaperLink-compatible price tag** | Cheap expressive low-power visual face | [OpenEPaperLink](https://github.com/OpenEPaperLink/OpenEPaperLink) | € used + flasher/AP |
+| 9 | **ESP32 + microphone + small speaker** | Best low-cost working conversational voice core | [ESPHome voice assistant](https://esphome.io/components/voice_assistant.html) | € components |
+| 10 | **Used Roborock S5 / Dreame D9 (exact variant)** | Mobile mapping platform, local API after rooting | [Valetudo supported list](https://valetudo.cloud/pages/general/supported-robots/) | €€ used |
+
+**Important Furby-specific limitation:** As of this edition, fluffkit's README says its author has **not yet played its custom audio on real hardware**. The audio/DLC/eye generation has file-level and simulated checks, which are not equivalent to physical confirmation. A new utterance cannot be streamed to Furby's own speaker via the documented BLE control path: uploading a custom audio pack can take ~1.5–2 minutes. For interactive conversation, use preloaded snippets or an external speaker until a faster audio path is demonstrated. The project's own `FORMAT.md` distinguishes verified file layout, inherited research, observations, and hypotheses. This is an unusually valuable starting point.
+
+## A practical embodied-assistant architecture
+
+```text
+wake word / push-to-talk
+    -> microphone (USB / Pi / ESP32 I2S / voice satellite)
+    -> STT (Whisper / faster-whisper / local STT)
+    -> dialogue + intents + permissions
+    -> Home Assistant or MQTT actions
+    -> expressive output router:
+          voice -> fast speaker / Piper / cloud TTS
+          Furby -> fluffkit / PyFluff (eyes, antenna, gestures, preloaded lines)
+          locomotion -> Roomba OI / MiP BLE / Sphero SDK
+          lights -> WLED / Tasmota / ESPHome
+          face -> OpenEPaperLink / tablet display / LED matrix
+```
+
+**Principle:** Keep the intelligence and speech system off the toy at first; let it be a safe, replaceable actuator-and-sensor body. This works even if the toy's own processor is tiny or closed. Add real-time speech through the original speaker only if you later find and verify a feasible hardware-level audio interface.
+
+---
+
+## The catalog
+
+Each entry includes the **device**, a practical software/firmware/hardware route, **what you might get**, difficulty, role and a starting reference. Historical projects are included to preserve all the examples discussed, even when a modern purchase is not recommended.
+
+### A. Furby, robot pets, and toy robots — highest embodiment value
+
+| Device / project | Route | What you can control or unlock | Effort | Embodiment role | Start here |
+|---|:---:|---|:---:|---|---|
+| Furby Connect (2016) | `S/F` | fluffkit: custom A1800 sounds, DLC packs, LCD eye animation, BLE actions; *real-hardware playback still unverified by author* | 3/5 | voice + face | [Project / docs](https://github.com/taituo/fluffkit) |
+| Furby Connect (2016) | `S` | PyFluff: emotions, LEDs, sensors, BLE control, DLC transfers | 2/5 | face + sensor | [Project / docs](https://github.com/martinwoodward/PyFluff) |
+| Furby Connect (2016) | `S/E` | bluefluff: original reverse-engineered BLE, debug menu and DLC research | 3/5 | face + sensor | [Project / docs](https://github.com/Jeija/bluefluff) |
+| Furby Connect (2016) | `S/H` | FurbyESP32: external ESP32/MQTT bridge, not onboard intelligence | 3/5 | voice + ambient | [Project / docs](https://github.com/CrazyRobMiles/FurbyESP32) |
+| Furby Connect (2016) | `E` | Furby-ReConnect NAND exploration / original voice banks, risky to change internal firmware | 4/5 | voice + face | [Project / docs](https://github.com/Furby-ReConnect/Furby) |
+| Furby Boom / 2012 Furby | `S/E` | Acoustic chirp-based app protocol; investigate only; *not* compatible with Connect BLE | 4/5 | voice + mechanism | [Project / docs](https://github.com/Jeija/bluefluff) |
+| Furby (2023) | `H/E` | Potential servo/motor/audio reuse by adding external controller; no blanket claim of compatible custom firmware | 4/5 | face + mechanism | [Project / docs](https://www.ifixit.com/Search?query=furby) |
+| Anki Vector 1.0/2.0 | `S` | wire-pod replacement local voice server; robot firmware stays largely original | 2/5 | voice + mobile | [Project / docs](https://github.com/kercre123/wire-pod) |
+| Anki Cozmo | `S` | PyCozmo direct Python wheels, head, lift and camera control (library describes itself as unstable) | 3/5 | face + mobile | [Project / docs](https://github.com/zayfod/pycozmo) |
+| Anki Cozmo | `S` | Original Cozmo SDK, if app/OS combination is viable | 2/5 | face + mobile | [Project / docs](https://github.com/anki/cozmo-python-sdk) |
+| WowWee MiP | `S` | Manufacturer-published BLE protocol; Python and other control clients | 2/5 | mobile | [Project / docs](https://github.com/WowWeeLabs/MiP-BLE-Protocol) |
+| WowWee RoboSapien | `S/H` | Infrared remote-command emulation with microcontroller; robot's electronics remain stock | 2/5 | mechanism | [Project / docs](https://github.com/Arduino-IRremote/Arduino-IRremote) |
+| WowWee Roboraptor / Roboreptile | `S/H/E` | IR-controlled animatronic body; investigate remote code mapping or IR capture | 3/5 | mechanism | [Project / docs](https://www.arduino.cc/reference/en/libraries/irremote/) |
+| WowWee RS Media | `F/E` | Historical Linux-based toy robot hacking and external control; confirm exact version before purchase | 4/5 | voice + mechanism | [Project / docs](https://www.robotshop.com/community/forum/c/robots/17) |
+| WowWee CHiP robot dog | `S/E` | Bluetooth/app control research; availability, pairing and protocol may block easy reuse | 4/5 | mobile | [Project / docs](https://github.com/search?q=wowwee+chip+robot&type=repositories) |
+| LEGO Mindstorms EV3 | `F` | ev3dev Linux, Python and motor/sensor interfaces | 2/5 | platform | [Project / docs](https://www.ev3dev.org/) |
+| LEGO NXT | `F` | leJOS Java alternative firmware on NXT brick | 3/5 | platform | [Project / docs](https://lejos.sourceforge.io/) |
+| LEGO BOOST / Powered Up / Technic hubs | `F` | Pybricks MicroPython firmware and motors/sensors | 2/5 | platform | [Project / docs](https://pybricks.com/) |
+| LEGO SPIKE Prime / Robot Inventor | `F` | Pybricks directly on compatible hubs | 2/5 | platform | [Project / docs](https://docs.pybricks.com/en/latest/) |
+| Sphero Mini / SPRK+ / BOLT | `S` | Sphero Edu / spherov2 BLE movement, LEDs and sensor access; exact version support varies | 2/5 | mobile | [Project / docs](https://spherov2.readthedocs.io/en/latest/) |
+| Sphero RVR / RVR+ | `S` | Official Python SDK and payload/robot expansion interface | 2/5 | mobile | [Project / docs](https://sdk.sphero.com/) |
+| Sphero BB-8 / R2-D2 toys | `S/E` | spherov2 and protocol implementations; app/platform compatibility varies | 3/5 | mobile | [Project / docs](https://spherov2.readthedocs.io/en/latest/) |
+| Petoi Bittle / Nybble (legacy) | `F/H` | OpenCat source code, servo gaits, IMU, external sensors | 3/5 | mobile | [Project / docs](https://github.com/PetoiCamp/OpenCat-Quadruped-Robot) |
+| Petoi Bittle X / Nybble Q | `F/S` | OpenCatESP32 control and programming on supported current boards | 3/5 | mobile | [Project / docs](https://github.com/PetoiCamp/OpenCatEsp32-Quadruped-Robot) |
+| Micro:bit toy-robot cars | `S/F` | MakeCode or MicroPython for cheap motors/servos/sensors; buy chassis separately | 1/5 | mobile | [Project / docs](https://microbit.org/) |
+| Dash / Dot educational robots | `S/E` | Use surviving official app/Blockly environment; third-party interfaces need version check | 2/5 | mobile | [Project / docs](https://www.makewonder.com/) |
+| Ozobot Evo | `S/E` | App/OzoBlockly line/colour programming; limited low-level access compared with BLE SDK robots | 2/5 | mobile | [Project / docs](https://ozobot.com/) |
+| Hexbug micro-robots / RC bugs | `H` | Salvage tiny motors, gearing, shells and batteries; add ESP32/Arduino board | 3/5 | mechanism | [Project / docs](https://learn.adafruit.com/) |
+| Fingerlings / basic battery animatronics | `H` | Reuse tiny motors, switches, LEDs and plastic shell with an external controller | 3/5 | mechanism | [Project / docs](https://learn.adafruit.com/) |
+| Pleo dinosaur | `E/H` | Legacy programmable robot pet; SDK and hardware access are historical/uncertain | 4/5 | mechanism | [Project / docs](https://github.com/search?q=pleodinosaur+robot&type=repositories) |
+| Sony AIBO ERS-series | `E` | Historic OPEN-R software/robot experiments; expensive and model-specific | 5/5 | mobile | [Project / docs](https://www.aibo.com/) |
+| i-Cybie robot dog | `H/E` | Hardware/controller replacement or legacy hacking; requires deep investigation | 4/5 | mobile | [Project / docs](https://github.com/search?q=i-cybie&type=repositories) |
+| LeapFrog Didj | `F/E` | Linux serial/debug/SD-card homebrew history; retro embedded platform rather than ready robot | 4/5 | platform | [Project / docs](https://elinux.org/Didj) |
+| Tamagotchi / virtual pets | `H/E` | Rehouse screen/buttons/speaker or emulator as embodied companion; original-firmware hacking highly model dependent | 4/5 | face | [Project / docs](https://github.com/search?q=tamagotchi+emulator&type=repositories) |
+
+| Big Mouth Billy Bass singing fish | `H` | Hack mouth/body motors and synchronize speech; classic low-cost robotic assistant embodiment | 2/5 | voice + mechanism | [Project / docs](https://www.raspberrypi.com/news/big-mouth-billy-bass-meets-raspberry-pi-pico-w/) |
+| Fisher-Price Chatter Telephone | `H` | Retro talking-phone shell converted to microphone/speaker/buttons with Raspberry Pi; physical rebuild | 3/5 | voice + face | [Project / docs](https://circuitdigest.com/project/chatter-smartphone-using-raspberry-pi) |
+| Talking Elmo / singing plush toys | `H` | Reuse mouth actuator, touch buttons and plastic body with a new low-voltage controller | 3/5 | voice + mechanism | [Project / docs](https://learn.adafruit.com/) |
+| Fischertechnik / LEGO WeDo 2.0 BLE controllers | `S` | Linux/Raspberry Pi toy controller examples for BLE motors and sensors; model dependent | 2/5 | platform | [Project / docs](https://github.com/harbaum/RPI-BLE-toy-control) |
+| Makeblock mBot / mBot2 | `S/F` | Educational wheeled base, sensors and motor programming via vendor tools or open interfaces | 2/5 | mobile | [Project / docs](https://www.makeblock.com/) |
+| DJI RoboMaster S1 | `S` | Official in-app Python/Scratch behavior control; external SDK compatibility needs checking | 3/5 | mobile | [Project / docs](https://github.com/collabnix/robomaster) |
+| DJI RoboMaster EP | `S` | Manufacturer Python SDK for drive, gimbal and sensor system; expensive but versatile | 3/5 | mobile | [Project / docs](https://github.com/dji-sdk/RoboMaster-SDK) |
+
+### B. Robot vacuum cleaners, floor robots, mobile appliance bases
+
+| Device / project | Route | What you can control or unlock | Effort | Embodiment role | Start here |
+|---|:---:|---|:---:|---|---|
+| iRobot Roomba 500/600 + Create 2 | `S/H` | Published Open Interface serial protocol for drive and sensor packets (exact model connector matters) | 3/5 | mobile | [Project / docs](https://github.com/alphagopher/roomba600_open_interface) |
+| Older iRobot Roomba 400/500 | `S/H/E` | SCI/OI or IR interface depending on model; verify connector and spec | 3/5 | mobile | [Project / docs](https://www.irobot.com/about-irobot/stem/create-2) |
+| Xiaomi Mi Robot Vacuum V1 | `F` | Valetudo local control after rooted installation; lacks persistent maps | 3/5 | mobile | [Project / docs](https://valetudo.cloud/pages/general/supported-robots/) |
+| Roborock S5 | `F` | Valetudo local map, zone commands, MQTT; often comparatively accessible rooting | 3/5 | mobile | [Project / docs](https://valetudo.cloud/pages/general/supported-robots/) |
+| Roborock S5 Max / S4 Max | `F` | Valetudo on specifically supported models; installation can require full disassembly | 4/5 | mobile | [Project / docs](https://valetudo.cloud/pages/general/supported-robots/) |
+| Roborock S7 | `F` | Check exact suffix and supported firmware/root method, do not assume all S7 variants | 4/5 | mobile | [Project / docs](https://valetudo.cloud/pages/general/supported-robots/) |
+| Dreame D9 (not D9 Max) | `F` | Valetudo supported; cheap lidar base when exact three-button revision is found | 3/5 | mobile | [Project / docs](https://valetudo.cloud/pages/general/supported-robots/) |
+| Dreame D9 Pro | `F` | Valetudo and compatible ported D9 firmware documented by project | 3/5 | mobile | [Project / docs](https://valetudo.cloud/pages/general/supported-robots/) |
+| Dreame F9 | `F` | Valetudo with model-specific rooting | 3/5 | mobile | [Project / docs](https://valetudo.cloud/pages/general/supported-robots/) |
+| Dreame L10 Pro / Z10 Pro | `F` | Valetudo; secure-boot and method depend on firmware revision | 4/5 | mobile | [Project / docs](https://valetudo.cloud/pages/general/supported-robots/) |
+| Xiaomi 1C / 1T | `F` | Valetudo only for matching hardware revisions, often UART work | 3/5 | mobile | [Project / docs](https://valetudo.cloud/pages/general/supported-robots/) |
+| Current unsupported Roborock / Dreame | `E` | Do not assume any vendor model is rootable or Valetudo-compatible | 5/5 | mobile | [Project / docs](https://valetudo.cloud/pages/general/supported-robots/) |
+| Roborock/Xiaomi using original local miIO API | `S/E` | Some models expose local commands/tokens for Home Assistant or Python; varies by firmware | 3/5 | mobile | [Project / docs](https://www.home-assistant.io/integrations/xiaomi_miio/) |
+| Generic Wi-Fi robot vacuums / Tuya OEM | `S/E` | Try Home Assistant/Tuya local API before attempting unknown firmware | 3/5 | mobile | [Project / docs](https://github.com/jasonacox/tinytuya) |
+| Vacuum robots with lidar modules | `H` | Salvage rotating lidar, wheel motors, battery contacts and bump sensors for DIY chassis | 4/5 | sensor + mobile | [Project / docs](https://github.com/Slamtec/rplidar_ros) |
+| Dyson 360 Eye / Heurist | `E` | App/cloud-dependent appliance; do not assume an open drive API | 5/5 | mobile | [Project / docs](https://www.home-assistant.io/integrations/) |
+| Robot mop / window-cleaner | `E/H` | Investigate vendor API or recontroller chassis; falling/entrapment risks with window robots | 5/5 | mobile | [Project / docs](https://esphome.io/) |
+| OpenMower-supported mower chassis | `H/F` | Complete mower-brain replacement with RTK and ROS; **blades: high risk, not a starter project** | 5/5 | mobile | [Project / docs](https://openmower.de/) |
+
+### C. Smart home, domestic appliances, actuators, and cheap control endpoints
+
+| Device / project | Route | What you can control or unlock | Effort | Embodiment role | Start here |
+|---|:---:|---|:---:|---|---|
+| Sonoff ESP8266 relays | `F` | Tasmota or ESPHome for MQTT/local automation; work only on safe low-voltage prototypes first | 3/5 | ambient | [Project / docs](https://tasmota.github.io/docs/) |
+| ESP8266 / ESP32 smart plugs | `F` | Tasmota/ESPHome, power monitoring when hardware supports it | 3/5 | ambient | [Project / docs](https://esphome.io/) |
+| Tuya Beken BK7231 devices | `F` | OpenBeken or ESPHome/LibreTiny; CloudCutter only for compatible unpatched firmware | 3/5 | ambient | [Project / docs](https://github.com/tuya-cloudcutter/tuya-cloudcutter) |
+| Tuya bulbs / sockets with accessible local keys | `S` | LocalTuya or TinyTuya local LAN control; model and account-dependent | 2/5 | ambient | [Project / docs](https://github.com/rospogrigio/localtuya) |
+| Tuya Zigbee sensors / lamps | `S` | Zigbee2MQTT with compatible coordinator and exact device support | 2/5 | sensor + ambient | [Project / docs](https://www.zigbee2mqtt.io/) |
+| IKEA TRÅDFRI / DIRIGERA devices | `S` | Use supported Home Assistant integration or Zigbee2MQTT; firmware flashing usually unnecessary | 2/5 | ambient | [Project / docs](https://www.home-assistant.io/integrations/ikea_dirigera/) |
+| Philips Hue lights / bridge | `S` | Local Hue API via official bridge, gestures and emotional lighting | 1/5 | ambient | [Project / docs](https://developers.meethue.com/) |
+| Govee lights (LAN-enabled models) | `S` | Local LAN API/Home Assistant where firmware supports it; many cloud-only variants | 2/5 | ambient | [Project / docs](https://www.home-assistant.io/integrations/govee_light_local/) |
+| WLED-compatible RGB/WS2812 strips | `F` | Create facial expressions, status lights, emotional gestures on ESP32 | 1/5 | face + ambient | [Project / docs](https://kno.wled.ge/) |
+| Zigbee / Z-Wave plugs, blinds, buttons | `S` | Home Assistant via appropriate coordinator; model-specific compatibility | 2/5 | ambient | [Project / docs](https://www.home-assistant.io/) |
+| 433 MHz weather sensors / remotes | `S/H` | rtl_433 or OpenMQTTGateway receives supported devices; obey local radio rules | 2/5 | sensor | [Project / docs](https://github.com/merbanan/rtl_433) |
+| IR remote appliances: TV, fans, toy robots | `S/H` | Broadlink IR or ESPHome remote transmitter/receiver, emulate original remote | 2/5 | mechanism | [Project / docs](https://esphome.io/components/remote_transmitter.html) |
+| SwitchBot Bot / Curtain / Meter | `S` | Bluetooth or Hub/API, easy physical button pressing for old appliances | 1/5 | mechanism | [Project / docs](https://www.home-assistant.io/integrations/switchbot/) |
+| Garage opener with dry-contact input | `H` | OpenGarage or ESPHome isolated relay and door-position sensing, not bypassing protections | 4/5 | mechanism | [Project / docs](https://opengarage.io/) |
+| OpenSprinkler irrigation controller | `S/F` | Official open API/firmware control for valves and scheduling | 2/5 | mechanism | [Project / docs](https://opensprinkler.com/) |
+| Gaggia Classic espresso machine | `H/F` | Gaggiuino adds temperature/pressure/flow profiling; **mains/heat/high-pressure risk** | 5/5 | mechanism | [Project / docs](https://gaggiuino.github.io/) |
+| Home Connect Bosch/Siemens appliances | `S` | Official Home Connect cloud API / Home Assistant; limited model-specific commands | 2/5 | mechanism | [Project / docs](https://developer.home-connect.com/) |
+| LG ThinQ appliances | `S` | Cloud API/Home Assistant integration; not an open firmware unlock | 2/5 | mechanism | [Project / docs](https://www.home-assistant.io/integrations/lg_thinq/) |
+| Samsung SmartThings appliances | `S` | Cloud-based integration via SmartThings; check supported operations | 2/5 | mechanism | [Project / docs](https://www.home-assistant.io/integrations/smartthings/) |
+| Miele appliances | `S` | Home Assistant integration where available; cloud/network constraints | 2/5 | mechanism | [Project / docs](https://www.home-assistant.io/integrations/) |
+| Dyson fans / purifiers | `S/E` | Third-party/local or cloud integrations vary by model; not equivalent to root access | 3/5 | mechanism | [Project / docs](https://www.home-assistant.io/integrations/) |
+| Electric kettle / coffee machines with BLE | `S/E` | Investigate BLE GATT commands with nRF Connect; never defeat thermal protection | 4/5 | mechanism | [Project / docs](https://github.com/nrfconnect) |
+| Smart scales / BLE thermometers / toothbrushes | `S/E` | Passive BLE sensor parsing/official integrations; low-cost embodiment triggers | 2/5 | sensor | [Project / docs](https://bthome.io/) |
+| Motorized blinds / curtains | `S/H` | Zigbee2MQTT/ESPHome controller with limit switches; ideal expressive movement | 3/5 | mechanism | [Project / docs](https://www.zigbee2mqtt.io/) |
+| Cheap aquarium feeders / pet feeders | `H/E` | Repurpose motor mechanisms, ideally without relying on them for unsupervised feeding | 3/5 | mechanism | [Project / docs](https://esphome.io/) |
+
+### D. Cameras, vision, microphones, displays, and ambient faces
+
+| Device / project | Route | What you can control or unlock | Effort | Embodiment role | Start here |
+|---|:---:|---|:---:|---|---|
+| Wyze Cam v2 / Xiaomi Xiaofang 1S | `F` | OpenMiko on exact Ingenic T20 hardware; RTSP, MJPEG, SSH | 3/5 | sensor | [Project / docs](https://github.com/openmiko/openmiko) |
+| Xiaomi Dafang / selected Wyze Cam | `F` | Dafang Hacks, local streaming and camera control; revision constraints | 3/5 | sensor | [Project / docs](https://github.com/EliasKotlyar/Xiaomi-Dafang-Hacks) |
+| Numerous generic IP cameras | `F` | OpenIPC on specific SoCs; carefully match board and SPI flash | 4/5 | sensor | [Project / docs](https://github.com/OpenIPC/firmware) |
+| RTSP/ONVIF existing IP cameras | `S` | Control video, PTZ if supported, event streams without firmware modification | 1/5 | sensor | [Project / docs](https://www.onvif.org/) |
+| USB webcam + old phone | `S/H` | Use UVC camera + face recognition/vision on a host; add it to a toy shell | 1/5 | sensor | [Project / docs](https://opencv.org/) |
+| Xbox 360 Kinect (v1) | `S` | libfreenect depth/IR/RGB skeleton or robot perception experiments | 2/5 | sensor | [Project / docs](https://github.com/OpenKinect/libfreenect) |
+| Xbox One Kinect (v2) | `S` | libfreenect2; good depth, USB 3 and power requirements | 3/5 | sensor | [Project / docs](https://github.com/OpenKinect/libfreenect2) |
+| Intel RealSense depth cameras | `S` | librealsense official depth/IMU SDK; model support may vary | 2/5 | sensor | [Project / docs](https://github.com/IntelRealSense/librealsense) |
+| RTL2832U DVB-T stick | `S` | RTL-SDR turns some TV sticks into software-defined radio receivers | 2/5 | sensor | [Project / docs](https://www.rtl-sdr.com/about-rtl-sdr/) |
+| Electronic shelf labels (supported ESL) | `F/H` | OpenEPaperLink, own graphics/status; often needs contact-flashing jig and ESP32 AP | 3/5 | face + ambient | [Project / docs](https://github.com/OpenEPaperLink/OpenEPaperLink) |
+| Kindle e-readers (supported older models) | `F` | Jailbreak + KOReader, display as slow-changing robot face or dashboard | 3/5 | face | [Project / docs](https://github.com/koreader/koreader) |
+| Kobo e-readers | `S/F` | NickelMenu / KOReader; repurpose screen as a face/dashboard | 2/5 | face | [Project / docs](https://github.com/pgaskin/NickelMenu) |
+| Old Android phone / tablet | `S` | Termux, Home Assistant dashboard, MQTT, browser kiosk and sensor apps; cheap face/brain | 1/5 | face + voice | [Project / docs](https://termux.dev/) |
+| iPod Classic / Sansa music players | `F` | Rockbox: open firmware, formats, controls; potential voice/sound prop | 3/5 | voice | [Project / docs](https://www.rockbox.org/) |
+| Old Nokia internet tablets / Maemo devices | `S/F/E` | Linux community and retro robotics interfaces; old batteries/interfaces restrict use | 4/5 | platform | [Project / docs](https://maemo.org/) |
+| Smart TVs with Android TV / Chromecast | `S` | ADB or Cast APIs in supported scenarios, dashboards/speech output | 2/5 | ambient | [Project / docs](https://developers.google.com/cast) |
+| LG webOS televisions (selected models) | `F` | webOS homebrew / root exploit depends heavily on firmware version | 4/5 | ambient | [Project / docs](https://github.com/webosbrew/webos-homebrew-channel) |
+| Chromecast v1 / original rooted units | `F/E` | Eureka-ROM legacy firmware, largely historical now | 4/5 | ambient | [Project / docs](https://github.com/team-eureka/Eureka-ROM) |
+| Amazon Dash Button | `S/E` | Repurpose Wi-Fi event/button trigger; original provisioning may no longer work | 3/5 | sensor | [Project / docs](https://github.com/search?q=amazon+dash+button+hacks&type=repositories) |
+| USB LED matrix / HUB75 panels | `S/H` | ESP32 matrix libraries, WLED, CircuitPython; expressive low-cost eyes | 2/5 | face | [Project / docs](https://github.com/mrcodetastic/ESP32-HUB75-MatrixPanel-DMA) |
+
+| Ulanzi TC001 smart pixel clock | `F` | AWTRIX 3 for MQTT/HTTP animated pixel face, indicators, 256 RGB pixels | 2/5 | face + ambient | [Project / docs](https://github.com/brendanwelsh/ulanzi-pixel-clock-awtrix) |
+| Divoom Pixoo 64 | `S` | Community Home Assistant integration for a Wi-Fi pixel face; can display states/animations | 2/5 | face + ambient | [Project / docs](https://github.com/gickowtf/pixoo-homeassistant) |
+| Sonos compatible network speakers | `S` | Home Assistant and supported local playback controls; use as an external expressive voice output | 1/5 | voice | [Project / docs](https://www.home-assistant.io/integrations/sonos/) |
+| Google Cast-enabled speakers | `S` | Cast TTS/audio to supported speakers from Home Assistant; not unrestricted access to speaker firmware | 2/5 | voice | [Project / docs](https://www.home-assistant.io/integrations/cast/) |
+| Any Bluetooth A2DP speaker | `S` | Cheap offboard spoken replies from Linux/Pi/phone; simplest workaround to toy audio-upload latency | 1/5 | voice | [Project / docs](https://www.bluez.org/) |
+| Old smart photo frame / Android digital frame | `S/E` | Kiosk app or browser display as animated eyes/robot face; needs app install or compatible OS | 2/5 | face | [Project / docs](https://www.home-assistant.io/dashboards/) |
+
+### E. Music instruments, samplers, synths, effects, and audio devices
+
+| Device / project | Route | What you can control or unlock | Effort | Embodiment role | Start here |
+|---|:---:|---|:---:|---|---|
+| Akai MPC1000 | `F` | JJOS adds advanced sequencing, editing, workflow and sound manipulation | 2/5 | voice | [Project / docs](https://www7a.biglobe.ne.jp/~mpc1000/) |
+| Akai MPC2500 | `F` | JJOS enhancements (different firmware build from MPC1000) | 2/5 | voice | [Project / docs](https://www7a.biglobe.ne.jp/~mpc1000/) |
+| Korg Volca Sample v1 | `F` | Pajen custom firmware: extra MIDI/polyphonic functions; exact hardware version matters | 3/5 | voice | [Project / docs](https://www.reddit.com/r/volcas/) |
+| Korg Volca FM v1 | `F` | Pajen alternative firmware and expanded MIDI behavior; **not the same as FM2** | 3/5 | voice | [Project / docs](https://www.reddit.com/r/volcas/) |
+| Korg NTS-1 | `S` | Official logue SDK custom oscillators/effects; supported user programming, not a jailbreak | 2/5 | voice | [Project / docs](https://github.com/korginc/logue-sdk) |
+| Korg minilogue xd / prologue | `S` | Official logue SDK custom digital oscillators/effects | 2/5 | voice | [Project / docs](https://github.com/korginc/logue-sdk) |
+| Zoom MS-50G / MS-70CDR | `F/E` | Community FX managers move effects across compatible pedals; backup first | 3/5 | voice | [Project / docs](https://github.com/g200kg/zoom-ms-utility) |
+| Mutable Instruments Braids / Clouds / Rings | `F` | Open source firmware and community alternate firmwares (e.g. Parasites on some modules) | 3/5 | voice | [Project / docs](https://github.com/pichenettes/eurorack) |
+| Critter & Guitari Organelle | `S` | Pure Data patches on Linux instrument; full custom sound brain | 2/5 | voice | [Project / docs](https://www.critterandguitari.com/organelle) |
+| monome norns | `S` | Community Lua engines/scripts for sound instruments and interactive behaviors | 2/5 | voice | [Project / docs](https://monome.org/docs/norns/) |
+| Roland Alpha Juno / JX-series synths | `S` | MIDI SysEx editors expose parameter automation; controller/program support differs | 3/5 | voice | [Project / docs](https://ctrlr.org/) |
+| Yamaha DX7 synthesizer | `F/E` | Historic replacement EPROMs/patch librarians; distinguish patch loading from firmware replacement | 4/5 | voice | [Project / docs](https://yamahadx7.com/) |
+| Roland SP / groovebox samplers | `S/E` | MIDI mappings and sample injection where device permits; no general firmware unlock | 3/5 | voice | [Project / docs](https://midi.org/specifications) |
+| Line 6 / Zoom multi-effects | `S/E` | Editor/USB/MIDI interfaces and model-specific community patches; check exact model | 3/5 | voice | [Project / docs](https://github.com/search?q=zoom+multi+stomp+firmware&type=repositories) |
+| MIDI keyboards / USB controllers | `S` | Re-map knobs/keys to robot joints, expression, speech effects, MIDI CC | 1/5 | mechanism | [Project / docs](https://github.com/FortySevenEffects/arduino_midi_library) |
+| Elektron instruments with MIDI/Overbridge | `S` | External sequencer to animate sonic character; uses official protocols, not patched firmware | 2/5 | voice | [Project / docs](https://www.elektron.se/) |
+| Old guitar amp with analog footswitch input | `H` | Use opto-isolated switch interface to automate channels; never modify mains amplifier stages | 4/5 | mechanism | [Project / docs](https://learn.adafruit.com/) |
+
+### F. Cameras, photography, and surprising feature unlocks
+
+| Device / project | Route | What you can control or unlock | Effort | Embodiment role | Start here |
+|---|:---:|---|:---:|---|---|
+| Canon EOS DSLRs (specific models) | `F` | Magic Lantern adds RAW-related video tools, zebras, focus peaking, scripting | 3/5 | sensor | [Project / docs](https://www.magiclantern.fm/) |
+| Canon PowerShot compact cameras | `F` | CHDK boot-time firmware extension, RAW capture, intervalometer, USB remote | 2/5 | sensor | [Project / docs](https://chdk.fandom.com/wiki/CHDK) |
+| Nikon D5100 / D7000 legacy models | `F/E` | NikonHacker patches, bitrate/removal-of-restrictions research; narrow compatibility | 4/5 | sensor | [Project / docs](https://nikonhacker.com/) |
+| Sony Alpha cameras (supported old models) | `S/F` | OpenMemories: Tweak app modifies some regional/time-limit settings | 3/5 | sensor | [Project / docs](https://github.com/ma1co/OpenMemories-Tweak) |
+| Samsung NX1 / NX500 | `F/E` | NX-KS video bitrate and camera tweaks, abandoned system / older firmware | 4/5 | sensor | [Project / docs](https://github.com/ottokiksmaler/nx500_nx1_modding) |
+| GoPro HERO models | `S/F/E` | GoPro Labs firmware and QR-based settings on selected cameras | 2/5 | sensor | [Project / docs](https://gopro.github.io/labs/) |
+| Old webcams / network cameras | `S/H` | UVC/RTSP + servo pan-tilt mount makes autonomous tracking robot eyes | 2/5 | sensor | [Project / docs](https://opencv.org/) |
+| FLIR E4 (specific early versions) | `F` | Historical E4→E8-style resolution unlock on certain early hardware/firmware | 5/5 | sensor | [Project / docs](https://www.eevblog.com/forum/thermal-imaging/) |
+| Raspberry Pi camera modules | `S` | libcamera / Picamera2 as an affordable embedded vision core | 1/5 | sensor | [Project / docs](https://www.raspberrypi.com/documentation/computers/camera_software.html) |
+
+### G. Routers, network hardware, and tiny computing platforms
+
+| Device / project | Route | What you can control or unlock | Effort | Embodiment role | Start here |
+|---|:---:|---|:---:|---|---|
+| Linksys WRT54G (supported variants) | `F` | OpenWrt history / DD-WRT / Tomato; verify flash/RAM variant, some too small today | 3/5 | platform | [Project / docs](https://openwrt.org/) |
+| Modern compatible Wi-Fi routers | `F` | OpenWrt package manager, VPN, MQTT, edge processing, serial access | 3/5 | platform | [Project / docs](https://openwrt.org/toh/start) |
+| DD-WRT compatible routers | `F` | Third-party routing firmware with custom network control | 3/5 | platform | [Project / docs](https://dd-wrt.com/) |
+| FreshTomato compatible routers | `F` | Tomato-family web UI, traffic QoS and scripting | 3/5 | platform | [Project / docs](https://freshtomato.org/) |
+| Supported ASUS routers | `F` | Asuswrt-Merlin extends ASUS stock firmware | 2/5 | platform | [Project / docs](https://www.asuswrt-merlin.net/) |
+| Gargoyle-compatible routers | `F` | OpenWrt-derived firmware for network quota and usage control | 3/5 | platform | [Project / docs](https://www.gargoyle-router.com/) |
+| ESP8266 (ESP-01 and NodeMCU) | `F` | Wi-Fi microcontroller instead of AT-command modem; ESPHome/Tasmota/Arduino | 1/5 | platform | [Project / docs](https://www.espressif.com/en/products/socs/esp8266) |
+| ESP32-S3 development boards | `F` | ESPHome voice, BLE, camera, display, I2S audio, motors through drivers | 1/5 | platform | [Project / docs](https://esphome.io/) |
+| Raspberry Pi / Pi Zero 2 W | `S` | Linux robotic glue: ASR/TTS, MQTT, BLE, ROS 2 components and cameras | 1/5 | platform | [Project / docs](https://www.raspberrypi.com/) |
+| Home Assistant Green / old mini-PC | `S` | Intents/automations hub; integrate multiple robot bodies | 1/5 | platform | [Project / docs](https://www.home-assistant.io/) |
+| OpenWrt travel routers | `F` | Portable robot access point, VPN, MQTT bridge, local service discovery | 2/5 | platform | [Project / docs](https://openwrt.org/) |
+| Raspberry Pi Pico / RP2040 | `F` | Tiny motor/sensor controller with MicroPython or C/C++ | 1/5 | platform | [Project / docs](https://www.raspberrypi.com/products/raspberry-pi-pico/) |
+| Flipper Zero | `F` | Unleashed / RogueMaster third-party ecosystem for exploring personal IR/RFID/NFC devices; obey laws | 3/5 | sensor | [Project / docs](https://github.com/DarkFlippers/unleashed-firmware) |
+
+### H. 3D printers, CNC, drones, RC and physical motion platforms
+
+| Device / project | Route | What you can control or unlock | Effort | Embodiment role | Start here |
+|---|:---:|---|:---:|---|---|
+| Marlin 3D printers | `F` | Open printer-control firmware, stepper movement and G-code for safe low-load builds | 3/5 | mechanism | [Project / docs](https://marlinfw.org/) |
+| Klipper-compatible 3D printers | `F` | Host-driven motion planning, macros and web control | 3/5 | mechanism | [Project / docs](https://www.klipper3d.org/) |
+| Duet / RepRapFirmware controllers | `F` | G-code and network control for custom machines | 3/5 | mechanism | [Project / docs](https://docs.duet3d.com/) |
+| GRBL CNC / laser controller boards | `F` | Open stepper motion control; lasers/spindles demand protective engineering | 4/5 | mechanism | [Project / docs](https://github.com/gnea/grbl) |
+| FluidNC on ESP32 | `F` | Browser-configurable motion controller for custom CNC and plotters | 3/5 | mechanism | [Project / docs](https://github.com/bdring/FluidNC) |
+| Retired inkjet printers / scanners | `H` | Salvage belts, steppers, encoders and rails for robotic face or mechanism | 3/5 | mechanism | [Project / docs](https://learn.adafruit.com/) |
+| Ryze DJI Tello / Tello EDU | `S` | Wi-Fi UDP SDK for flight/video; indoor no-prop test and local aviation rules | 2/5 | mobile | [Project / docs](https://github.com/dji-sdk/Tello-Python) |
+| Crazyflie 2.x | `F/S` | Open-source flight control and Crazyflie Python library | 3/5 | mobile | [Project / docs](https://www.bitcraze.io/) |
+| Parrot AR.Drone | `S` | Legacy Wi-Fi drone SDK and Python/Node control, batteries aging | 3/5 | mobile | [Project / docs](https://github.com/AutonomyLab/ardrone_autonomy) |
+| Betaflight-compatible FPV flight controllers | `F` | Tune and program flight firmware; unsafe as unattended embodied assistant | 4/5 | mobile | [Project / docs](https://betaflight.com/) |
+| ArduPilot controllers | `F` | Autopilot for rovers, boats, multirotors; integrate MAVLink/ROS | 4/5 | mobile | [Project / docs](https://ardupilot.org/) |
+| OpenTX compatible radio transmitters | `F` | Open radio firmware and model scripts | 3/5 | platform | [Project / docs](https://www.open-tx.org/) |
+| EdgeTX compatible transmitters | `F` | OpenTX successor, scripts and radio features | 3/5 | platform | [Project / docs](https://edgetx.org/) |
+| ExpressLRS radios | `F` | Open low-latency RC link firmware for supported Tx/Rx | 3/5 | sensor | [Project / docs](https://www.expresslrs.org/) |
+| LEGO / toy RC cars with dead controllers | `H` | Replace receiver electronics with ESP32 + motor driver + existing chassis | 2/5 | mobile | [Project / docs](https://docs.arduino.cc/) |
+| Xiaomi / Ninebot scooters | `F/E` | ScooterHacking changes controls; transport safety/regulation makes a poor robot-assistant starter | 5/5 | mobile | [Project / docs](https://scooterhacking.org/) |
+
+| Nintendo Wii Remote (Wiimote) | `S` | Bluetooth accelerometer/IR camera/buttons as physical gestural control input | 2/5 | sensor | [Project / docs](https://wiibrew.org/wiki/Wiimote) |
+| Nintendo Switch Joy-Cons | `S/E` | Bluetooth IMU, buttons and vibration through community Linux libraries; pairing/version caveats | 3/5 | sensor + mechanism | [Project / docs](https://github.com/joaorb64/joycond) |
+| PlayStation Move controllers | `S` | Motion controllers as expressive hand-tracking props with PSMoveAPI | 3/5 | sensor | [Project / docs](https://github.com/thp/psmoveapi) |
+
+### I. Consoles, phones, handhelds and retro screens (the projects we discussed)
+
+| Device / project | Route | What you can control or unlock | Effort | Embodiment role | Start here |
+|---|:---:|---|:---:|---|---|
+| Sony PSP | `F` | Dark_AleX OE/M33, PRO/LME community firmware; homebrew and emulation | 3/5 | platform | [Project / docs](https://www.psdevwiki.com/psp/) |
+| Nintendo Wii | `F` | Homebrew Channel / BootMii; repurpose controller sensors and IR remote | 3/5 | sensor | [Project / docs](https://wiibrew.org/) |
+| Sony PlayStation 3 | `F` | Rebug/Cobra/Evilnat; historic Linux/Cell computation and OtherOS controversies | 4/5 | platform | [Project / docs](https://www.psdevwiki.com/ps3/) |
+| Xbox 360 | `H/F` | JTAG / RGH hardware modification; old console as experimental compute box | 5/5 | platform | [Project / docs](https://consolemods.org/wiki/Xbox_360:Xbox_360_Mods_Wiki) |
+| Nintendo 3DS | `F` | Luma3DS + boot9strap; homebrew access and clock modes on New 3DS | 3/5 | platform | [Project / docs](https://3ds.hacks.guide/) |
+| Nintendo Switch (specific early models) | `F/H` | Atmosphère custom firmware; ability depends on hardware revision | 4/5 | platform | [Project / docs](https://github.com/Atmosphere-NX/Atmosphere) |
+| PlayStation Vita | `F` | HENkaku / Enso, PSVshell for clocks and homebrew | 3/5 | platform | [Project / docs](https://vita.hacks.guide/) |
+| Android phones (supported) | `F` | CyanogenMod (historical), LineageOS (current ROM family) | 3/5 | face + platform | [Project / docs](https://lineageos.org/) |
+| Privacy-focused supported Android phones | `F` | GrapheneOS for specific Pixels; not a general hobby-robot firmware | 3/5 | platform | [Project / docs](https://grapheneos.org/) |
+| Android ROM ecosystem | `F` | Paranoid Android and Resurrection Remix are historical third-party ROM families | 3/5 | platform | [Project / docs](https://xdaforums.com/) |
+| First-generation iPhones | `E/F` | iDroid/OpeniBoot historical Android/Linux port; not usable as modern phone | 5/5 | platform | [Project / docs](https://github.com/search?q=OpeniBoot+iDroid&type=repositories) |
+| iPhone 7 class | `E` | Project Sandcastle experimental Android/Linux boot, severe feature gaps | 5/5 | platform | [Project / docs](https://projectsandcastle.org/) |
+| Amazon Kindle (specific eras) | `F` | Jailbreak/KOReader, custom launcher/reader and possible information display | 4/5 | face | [Project / docs](https://github.com/koreader/koreader) |
+| Kobo eReaders | `S/F` | Kobo firmware patches/NickelMenu, alternate readers and automation | 2/5 | face | [Project / docs](https://github.com/pgaskin/NickelMenu) |
+
+### J. BIOS, boards, hardware unlocks, instruments of reverse engineering
+
+| Device / project | Route | What you can control or unlock | Effort | Embodiment role | Start here |
+|---|:---:|---|:---:|---|---|
+| Supported PCs / ThinkPads | `F` | coreboot low-level firmware replacement, model-specific board support | 5/5 | platform | [Project / docs](https://www.coreboot.org/) |
+| Supported older laptops | `F` | Libreboot, focus on reducing nonfree firmware where supported | 5/5 | platform | [Project / docs](https://libreboot.org/) |
+| Supported Chromebooks | `F` | MrChromebox UEFI firmware enables other OS installs | 4/5 | platform | [Project / docs](https://mrchromebox.tech/) |
+| Selected ThinkPads | `F` | Skulls prebuilt coreboot ecosystem | 5/5 | platform | [Project / docs](https://github.com/merge/skulls) |
+| Supported security-oriented computers | `F` | Heads measured/verified boot project | 5/5 | platform | [Project / docs](https://osresearch.net/) |
+| Supported laptop/mainboard families | `F` | Dasharo open firmware ecosystem | 5/5 | platform | [Project / docs](https://dasharo.com/) |
+| AMD Phenom II X2 CPUs (some) | `F/E` | Historic ACC/BIOS two-to-four-core unlock; only healthy disabled cores work | 4/5 | platform | [Project / docs](https://www.overclock.net/) |
+| AMD Radeon RX 480 4 GB (some launch units) | `F/E` | Historic 4→8 GB VRAM unlock only when 8 GB chips physically installed | 5/5 | platform | [Project / docs](https://www.techpowerup.com/vgabios/) |
+| AMD Radeon RX 460 (some) | `F/E` | Historic shader unlock via VBIOS, chip/revision dependent | 5/5 | platform | [Project / docs](https://www.techpowerup.com/vgabios/) |
+| New Nintendo 3DS | `F` | Luma CPU+L2 feature can force higher clock for older titles; no universal 3× FPS | 3/5 | platform | [Project / docs](https://github.com/LumaTeam/Luma3DS) |
+| Sony PSP CPUs | `F` | Older 222 MHz default vs 333 MHz clock choices; not an infinite power unlock | 3/5 | platform | [Project / docs](https://www.psdevwiki.com/psp/) |
+| PS Vita CPUs | `F` | PSVshell clocks for compatible homebrew environment; battery/thermal costs | 3/5 | platform | [Project / docs](https://github.com/Electry/PSVshell) |
+| Nexus 4 phones | `F/E` | LTE Band 4 hidden radio support in certain modem configurations; historic regional limitation | 5/5 | platform | [Project / docs](https://xdaforums.com/) |
+| Rigol DS1052E | `F/E` | Historic 50→100 MHz oscilloscope bandwidth hack; metrology still requires calibration | 5/5 | sensor | [Project / docs](https://www.eevblog.com/forum/testgear/) |
+| Flipper Zero Unleashed / RogueMaster | `F` | Third-party Flipper firmware for supported hardware, not an unlock-all magic tool | 3/5 | sensor | [Project / docs](https://github.com/DarkFlippers/unleashed-firmware) |
+
+### K. Historical near-misses and unfinished potential worth studying
+
+| Device / project | Route | What you can control or unlock | Effort | Embodiment role | Start here |
+|---|:---:|---|:---:|---|---|
+| iDroid / OpeniBoot | `E` | Old Android-on-iPhone prototype; phone hardware support never reached usable modern product | 5/5 | platform | [Project / docs](https://github.com/search?q=OpeniBoot&type=repositories) |
+| Project Sandcastle | `E` | Experimental Android on iPhone 7 class, missing major phone features | 5/5 | platform | [Project / docs](https://projectsandcastle.org/) |
+| PS3 AsbestOS | `E` | Linux boot after OtherOS removal; GPU/driver/platform experience remained difficult | 5/5 | platform | [Project / docs](https://github.com/search?q=AsbestOS+ps3&type=repositories) |
+| NikonHacker | `E` | Camera patching effort never became broadly supported Magic Lantern counterpart | 5/5 | sensor | [Project / docs](https://nikonhacker.com/) |
+| Incomplete Rockbox ports | `E` | Some iPod nano and other models never reached stable supported builds | 5/5 | voice | [Project / docs](https://www.rockbox.org/wiki/TargetStatus) |
+| Original Eureka-ROM Chromecast | `E` | Functional but aging custom firmware whose ecosystem did not mature for modern devices | 4/5 | ambient | [Project / docs](https://github.com/team-eureka/Eureka-ROM) |
+| Furby Connect original full own-code execution ambition | `E` | BLE DLC content control succeeded historically; full native-code execution remained a separate unresolved problem | 5/5 | face | [Project / docs](https://github.com/Jeija/bluefluff) |
+| Furby Connect arbitrary real-time speech via onboard speaker | `E` | Current known DLC transport is too slow for interactive speech; explore audio bus / amplifier interface carefully | 5/5 | voice | [Project / docs](https://github.com/taituo/fluffkit/blob/main/README.md) |
+| Free60 Xbox 360 Linux | `E` | Historic kernel/driver port attempts, intermittent renewed experimentation | 5/5 | platform | [Project / docs](https://free60.org/) |
+| iPodLinux | `E` | Historic Linux-on-iPod project; modern usability and hardware support limited | 5/5 | voice | [Project / docs](https://www.ipodlinux.org/) |
+| Old ESP8266 AT-only modules | `F` | Hardware was much more capable than original modem-style sales pitch; became open MCU platform | 2/5 | platform | [Project / docs](https://docs.espressif.com/projects/esp8266-rtos-sdk/en/latest/) |
+
+
+---
+
+## Tools and software you actually need
+
+### 1. Software-only / API / automation toolkit
+
+| Tool | What it does | Best use | Starting point |
+|---|---|---|---|
+| **Home Assistant** | Local automation hub, entities, events, dashboards, Assist voice | Connect everything into one robot personality | [Official](https://www.home-assistant.io/) |
+| **MQTT (Mosquitto)** | Pub/sub messages between devices | Send `expression=happy`, `move=left`, `speak=...` | [Mosquitto](https://mosquitto.org/) |
+| **Node-RED** | Visual flow editor | Rapid prototypes, buttons, timers and behaviors | [Node-RED](https://nodered.org/) |
+| **ESPHome** | Firmware generation and Home Assistant integration | ESP32 voice satellites, actuators, GPIO | [Docs](https://esphome.io/) |
+| **Tasmota** | Local firmware for compatible switches and smart devices | MQTT-first lights/relays/sensors | [Docs](https://tasmota.github.io/docs/) |
+| **WLED** | Lighting effects/API for addressable LEDs | Eyes, mood, antenna light, expressive ambient glow | [Docs](https://kno.wled.ge/) |
+| **Zigbee2MQTT** | Zigbee coordinator software + MQTT | Mix cheap buttons, sensors, plugs from brands | [Docs](https://www.zigbee2mqtt.io/) |
+| **OpenMQTTGateway** | RF/IR/BLE ↔ MQTT gateway | Bring old radio gadgets into the robot nervous system | [GitHub](https://github.com/1technophile/OpenMQTTGateway) |
+| **Bleak** | Python BLE client | Furby/MiP/robot control, discovery, GATT | [GitHub](https://github.com/hbldh/bleak) |
+| **nRF Connect** | Inspect BLE services/characteristics and log traffic | Determine whether an app-controlled toy exposes a usable protocol | [Nordic](https://www.nordicsemi.com/Products/Development-tools/nRF-Connect-for-mobile) |
+| **Wireshark** | Network protocol analyzer | Debug MQTT, HTTP, mDNS and app connections | [Site](https://www.wireshark.org/) |
+| **mitmproxy** | HTTP(S) inspection proxy in a permitted test environment | Understand your own app traffic | [Docs](https://mitmproxy.org/) |
+| **adb / Android platform-tools** | Debug an Android device | Old-phone face, sensor bridge, kiosk control | [Android](https://developer.android.com/tools/adb) |
+| **Termux** | Linux-like tools on Android | Old Android phone becomes network bridge, microphone, controller | [Site](https://termux.dev/) |
+| **OpenCV** | Computer vision toolkit | Look-at-face, track hand, gesture and camera vision | [Site](https://opencv.org/) |
+| **ROS 2** | Robotics nodes and standardized motion/sensor tooling | Larger autonomous robots and mobile platforms | [ROS](https://docs.ros.org/) |
+| **WebSockets / HTTP / gRPC** | Ways to send commands between components | Design an API for any physical robot body | [MDN WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API) |
+| **FFmpeg** | Transcode audio/video | Prepare custom sound packs, camera streams | [Site](https://ffmpeg.org/) |
+| **Git / GitHub** | Source control and project discovery | Preserve experiments and reproducible instructions | [Git](https://git-scm.com/) |
+
+### 2. Voice stack: make a Siri replacement before cracking speaker firmware
+
+| Function | Options | Important caveat |
+|---|---|---|
+| Wake word | **openWakeWord**, ESPHome `micro_wake_word` | Test false triggers around music and TV |
+| Speech input | **faster-whisper / whisper.cpp**, Home Assistant Assist pipeline | Needs a suitable mic and enough compute; Finnish support varies by model |
+| Speech output | **Piper**, espeak-ng, cloud TTS | Piper can be local, but check availability and quality of Finnish voices |
+| Voice-device transport | **Wyoming Protocol** or ESPHome Voice Assistant | Wyoming deliberately has no auth/encryption; use trusted LAN only |
+| Intent routing | **Home Assistant Assist**, Node-RED, function calls | Explicit permissions, confirmation for dangerous actions |
+| Conversational brain | Local LLM or remote model | Robot outputs must pass a safety/command validation layer |
+| Furby expression | **fluffkit / PyFluff** | Pre-recorded clips/commands are not live open-ended onboard TTS |
+| Mobile base | **Roomba OI / MiP BLE / Sphero SDK** | Never connect LLM text directly to unchecked motor control |
+
+Voice projects: [Wyoming](https://github.com/OHF-Voice/wyoming), [openWakeWord](https://github.com/dscripka/openWakeWord), [whisper.cpp](https://github.com/ggml-org/whisper.cpp), [faster-whisper](https://github.com/SYSTRAN/faster-whisper), [Piper](https://github.com/rhasspy/piper), [ESPHome Voice Assistant](https://esphome.io/components/voice_assistant.html), [Home Assistant Assist](https://www.home-assistant.io/voice_control/).
+
+### 3. Electronics and reverse engineering toolkit
+
+| Tool | Typical purpose | Buying/usage notes |
+|---|---|---|
+| **USB UART serial adapter** (3.3 V logic) | Read boot logs, recover embedded Linux shell, configure devices | Never connect a 5 V logic output to a 3.3 V input; verify GND/VCC wiring |
+| **USB-to-TTL / CP2102 / CH340** | Serial boot console on routers, vacuums, toys | Model pinout matters; sometimes USB serial isn't enough |
+| **Multimeter** | Identify ground, voltage, continuity | Essential before connecting adapters |
+| **Logic analyzer** (e.g. Saleae-compatible) | Record I²C/SPI/UART/IR signals | Passive sniff first; decode with [sigrok/PulseView](https://sigrok.org/wiki/PulseView) |
+| **USB power meter** | Check current and USB supply stability | Useful for motor-less bench tests |
+| **ST-Link / CMSIS-DAP** | Flash or debug STM32/Cortex-M over SWD | Target may lock debug interface; backup firmware first |
+| **J-Link / OpenOCD** | SWD/JTAG debugging | Appropriate legal access and matching pinout required |
+| **SOIC-8 clip + CH341A-class SPI programmer** | Dump/restore SPI flash on compatible low-voltage boards | Check programmer voltage, chip pinout and clip contact carefully |
+| **Hot-air station / temperature-controlled soldering iron** | Replace boards and solder test wires | Start on scrap boards, not irreplaceable toys |
+| **Bench current-limited power supply** | Safely supply experimental electronics | Set current limit; do not wire directly to mains appliances |
+| **Oscilloscope** | Inspect audio, motors, serial and PWM waveforms | A cheap USB scope can be sufficient for low-voltage work |
+| **IR transmitter / receiver** | Learn/replay toy remotes | Use [Arduino-IRremote](https://github.com/Arduino-IRremote/Arduino-IRremote) |
+| **Ubertooth One / BLE sniffer** | Discover unknown Bluetooth toy command traffic | Optional; app + GATT inspection may be enough |
+| **RTL-SDR USB dongle** | Receive radio telemetry and decode inexpensive sensors | Receive-only is a much safer beginning than transmit experiments |
+| **ESP32 + motor driver (TB6612FNG etc.)** | Convert dead RC shells into Wi-Fi/BLE robots | Never drive motors directly from a GPIO pin |
+| **Servo tester / PCA9685** | Try robot facial mechanisms and many servos | Ensure suitable power and a mechanical stop |
+| **3D printer** | Mounting brackets for toy heads, mics and speakers | Print non-structural prototypes first |
+
+Firmware/static analysis stack: [binwalk](https://github.com/ReFirmLabs/binwalk), [Ghidra](https://ghidra-sre.org/), [radare2](https://rada.re/n/), [OpenOCD](https://openocd.org/), [Flashrom](https://www.flashrom.org/), [esptool](https://github.com/espressif/esptool), [PlatformIO](https://platformio.org/), [Arduino IDE](https://www.arduino.cc/en/software), [Sigrok](https://sigrok.org/), [PulseView](https://sigrok.org/wiki/PulseView).
+
+**Firmware workflow:** identify board → find documentation → record chip markings → capture stock firmware when legitimately possible → save full backup and hashes → verify chip voltage and flash layout → modify one behavior → test with motors disconnected → have recovery method before flashing.
+
+### 4. Quick beginner protocol decoder / controller cheat sheet
+
+| If the device has… | Start with… | Avoid assuming… |
+|---|---|---|
+| Bluetooth LE companion app | nRF Connect, Bleak, manufacturer BLE docs | That GATT characteristics are unencrypted or writable |
+| Infrared remote | IR receiver and IRremote | That the codes are identical across product years |
+| Local web app/API | Browser dev tools, Home Assistant docs, `curl` | That it keeps working offline or without tokens |
+| HomeKit/Matter | Home Assistant + relevant ecosystem | That all commands are exposed |
+| Zigbee | Zigbee2MQTT supported devices list | That every device of the brand works |
+| 433 MHz sensor | rtl_433 supported device list | That all transmissions can legally be replayed |
+| USB serial console | Multimeter + 3.3 V UART adapter | That RX/TX and VCC are safely interchangeable |
+| SD card firmware/update files | Image comparison, hashes, vendor update docs | That unsigned images will boot |
+| Motor with two wires | External H-bridge driver | That GPIO can power it directly |
+| Addressable LEDs | WLED/ESPHome | That all strips use the same voltage/protocol |
+
+---
+
+## Fluffkit → voice companion development plan
+
+This section is tailored to your stated goal: **replace Siri with a real, expressive Furby-like creature**.
+
+### What fluffkit already appears to have implemented in code
+
+1. Audio conversion into A1800 and DLC packaging with computer-side round-trip tests.
+2. BLE upload/control path using PyFluff, with simulated protocol tests.
+3. Custom eye frames from images into the CEL/SPR/PAL/SEQ data structures.
+4. Extraction of supported A1800 clips from Furby's firmware audio banks.
+5. An ESPHome companion config generator for an external ESP32 and Home Assistant.
+
+**The repo's README explicitly flags that this has not yet been tested end-to-end on a physical Furby.** The author's code-based results are not a claim of proven real-device playback or responsiveness.
+
+### Suggested milestone ladder
+
+- [ ] **M0 — Real-device smoke test:** connect to your Furby, read sensors, antenna control, one known stock action. Capture exact hardware/firmware revision.
+- [ ] **M1 — Validate original downloadable content flow:** upload a known working test DLC and re-trigger it; back up original state and exercise recovery.
+- [ ] **M2 — First custom Finnish phrase:** a single low-volume, short clip; verify audible quality, body motions, and eye animations; record BLE timings.
+- [ ] **M3 — Reliable preloaded library:** multiple phrases; map ID↔intent; recover after interruption or reboot; measure latency distribution.
+- [ ] **M4 — Eye expression API:** `look`, `blink`, `thinking`, `speaking`, `success`, `confused`; test how eye sequences overlap audio/motors.
+- [ ] **M5 — External live voice satellite:** USB/ESP32 mic and external speaker; STT + reasoning + TTS works with no Furby audio upload.
+- [ ] **M6 — Behavior synchronization:** local AI response invokes expressive Furby action when audio plays; preserve safe motion constraints.
+- [ ] **M7 — MTR/LPS reverse-engineering:** characterize motor opcodes, lip patterns, and durations experimentally with short test sequences and video.
+- [ ] **M8 — Controlled onboard audio study:** identify the safe audio path / playback IC and whether real-time digital injection could be achievable; do not assume it is possible without hardware changes.
+- [ ] **M9 — Home Assistant & permissions:** lights/temperatures/calendar/weather/media; authenticate privileged commands, log outcomes, avoid automatic power/heating/locks.
+- [ ] **M10 — Multi-body ecosystem:** use the same AI character in Furby, MiP mobile base, e-paper face, tabletop robot, or recycled speaker housing.
+
+### A minimal stable action contract
+
+Keep speech and physical expression separate. Example conceptual messages (not actual fluffkit command syntax):
+
+```json
+{
+  "say": "The kitchen is 22 degrees",
+  "expression": "happy",
+  "look_at": "user",
+  "motion": "small_nod",
+  "device_action": {"domain": "light", "action": "turn_off", "target": "living_room"}
+}
+```
+
+The **robot gateway** should translate those semantic actions into known safe commands, clamp movement speed, refuse unsupported instructions, and issue timeouts. The dialogue model should not be allowed to generate raw BLE packets, motor drive values, heater commands, or arbitrary shell execution by itself.
+
+---
+
+## Shopping and salvage strategy
+
+**Search phrases for flea markets / eBay / Tori / Facebook Marketplace:**
+
+- `Furby Connect 2016` (not `Furby Boom`, unless acoustic chirp experimentation is intended)
+- `WowWee MiP`, `MiP robot`, `RoboSapien IR remote`, `Roboraptor remote`
+- `Anki Cozmo`, `Anki Vector` (ask about battery, charger, face and app pairing)
+- `LEGO BOOST Hub`, `SPIKE Prime hub`, `Mindstorms EV3 brick`, `Power Functions motors`
+- `Sphero Mini`, `SPRK+`, `BOLT`, `Sphero BB-8`
+- `Roomba 600 serial`, `Roomba 650`, `Roomba Create 2`, `Roborock S5`, `Dreame D9` (not D9 Max)
+- `electronic shelf label Solum`, `e-ink price tag`, `OpenEPaperLink compatible`
+- `Wyze Cam v2`, `Xiaomi Dafang`, `Xiaofang 1S`, `ESP32-S3-BOX`, `INMP441`, `MAX98357A`
+- `broken printer scanner for parts`, `broken robot toy`, `motorized plush toy`, `servo toy`, `old android tablet`
+
+**Before buying any specific model:** photograph the underside label and FCC/CE identifiers; ask for hardware revision, installed firmware version, charger, working battery, and demonstration of pairing. Search for the **exact model + firmware + project compatibility**, not just brand. Beware swelling lithium cells, inaccessible proprietary chargers, and discontinued companion apps. A dead toy with useful intact motors can still be valuable, but price it as a *hardware salvage* rather than a ready-to-control robot.
+
+### Choose a project by goals, not by prestige
+
+| Goal | Best first options | Don't start with |
+|---|---|---|
+| Fastest talking character | ESP32/old-phone face + mic/speaker; Furby expression via preloaded phrases | Live direct audio injection into Furby's chipset |
+| Cheapest moving character | IR RoboSapien, MiP, used RC toy with motor driver | Expensive humanoid robots |
+| Best mapping rover | A supported Dreame/Roborock using Valetudo or a custom rover with sensors | Random unsupported 'smart' vacuum |
+| Best animated eyes | Old tablet, LED matrix, compatible e-paper tag, Furby Connect | Blind firmware rewrite of an unknown smart display |
+| Best cheap sensors | ESP32 + accelerometer, Zigbee motion, RTSP camera, salvaged Kinect | Proprietary home-appliance PCB reverse engineering |
+| Best sound personality | Preloaded Furby clips, Korg NTS-1, sampler/MIDI device | Flashing undocumented synth ROMs |
+| Best mechanical face | Broken animatronic toy + external servo controller | Mains-powered appliance motors |
+
+### Priority scorecard for candidate purchases
+
+Rate each 0–5; the high-scoring candidates deserve buying first.
+
+| Criterion | Questions |
+|---|---|
+| **Local control** | Is there a real offline API? Does the app require dead vendor servers? |
+| **Outputs** | Can it move, speak, light up, change face or display information? |
+| **Sensors** | Camera, microphones, touch, proximity, IMU, motor feedback? |
+| **Protocol/documentation** | Maintained SDK, reverse-engineered repo, pinouts, recovery guide? |
+| **Cost/availability** | Cheap used locally, battery replaceable, parts obtainable? |
+| **Reliability** | Does it reconnect after restart? Can the firmware be recovered? |
+| **Risk** | Child-safe, low-voltage, no blades/heating/high speed? |
+| **Expressiveness** | Is it delightful as a character even without perfect AI? |
+
+Copy this template for each thrift find:
+
+```markdown
+### Device name / exact model
+- Used asking price and source:
+- Hardware revision / radio chip / firmware version:
+- Route: S / F / H / E
+- Project link and last verified compatibility:
+- Available actions: (speak / LED / motor / eyes / API)
+- Available sensors:
+- Needs an original working app or account? Yes/No/Unknown
+- Needs cloud? Yes/No/Unknown
+- Requires soldering? Yes/No/Unknown
+- Local control latency / throughput:
+- Safety limit / minimum useful prototype:
+- Backup / recovery method:
+- Idea for embodiment:
+- Confidence: proven on exact model / documented / speculative
+```
+
+---
+
+## What we deliberately do **not** equate
+
+- **Ability to send a button press** is not the same as **firmware access**.
+- **A cloud API** is not the same as **local control**, and may vanish when a vendor switches services.
+- **An existing microphone** does not prove you can get raw, high-quality speech audio out of a toy.
+- **An existing speaker** does not mean you can stream real-time TTS to it.
+- **A graphics LCD** does not mean arbitrary frame upload is practical at conversational frame rates.
+- **A model name** does not identify its silicon: popular product families often have hidden PCB revisions.
+- **A functioning reverse-engineering exploit** from 2013 may not work on a device updated in 2026.
+- **A firmware flash** may disable the original app permanently, erase calibration or make the device unsafe.
+- **'Open firmware'** and **'maintained today'** are different things. Historical material is retained because it can teach techniques or expose forgotten hardware resources.
+
+## Key primary sources checked for this edition
+
+- [fluffkit README](https://github.com/taituo/fluffkit) and [technical DLC-format notes](https://github.com/taituo/fluffkit/blob/main/FORMAT.md) — custom Furby audio, eyes, ESP32 bridge, explicit hardware-testing limitation.
+- [PyFluff](https://github.com/martinwoodward/PyFluff) and [bluefluff](https://github.com/Jeija/bluefluff) — Furby BLE and original reverse engineering.
+- [Valetudo official supported robot list](https://valetudo.cloud/pages/general/supported-robots/) — exhaustive compatible-model list; must check hardware revision and installation procedure.
+- [PyCozmo](https://github.com/zayfod/pycozmo), [wire-pod](https://github.com/kercre123/wire-pod), [WowWee MiP BLE protocol](https://github.com/WowWeeLabs/MiP-BLE-Protocol), [Sphero SDK](https://sdk.sphero.com/) — practical toy robotics interfaces.
+- [Pybricks](https://docs.pybricks.com/en/latest/), [ev3dev](https://www.ev3dev.org/) and [Roomba Open Interface example](https://github.com/alphagopher/roomba600_open_interface) — programmable brick and mobile base options.
+- [OpenEPaperLink](https://github.com/OpenEPaperLink/OpenEPaperLink), [OpenMiko](https://github.com/openmiko/openmiko), [OpenIPC](https://github.com/OpenIPC/firmware) — repurposable displays/cameras.
+- [Tuya CloudCutter](https://github.com/tuya-cloudcutter/tuya-cloudcutter), [OpenMower](https://openmower.de/) and [Gaggiuino](https://gaggiuino.github.io/) — firmware compatibility, high-risk hardware alteration examples.
+- [Wyoming Protocol](https://github.com/OHF-Voice/wyoming) and [ESPHome](https://esphome.io/) — realistic local voice architectures.
+
+**Final takeaway:** for an embodied Siri replacement, the best-value device is not necessarily the one with the strongest CPU. It is the one with **expressive actuators, a reliable control protocol, predictable sensors, low latency and repairable hardware**. An inexpensive toy attached to a good local voice engine can be more effective than an impressive but locked-down 'AI robot'.
+
