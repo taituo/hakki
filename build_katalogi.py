@@ -97,54 +97,61 @@ page = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Häkki — Hackable Everything -katalogi (208 laitetta)</title>
 <style>
-:root{--bg:#f6f4ee;--card:#ffffff;--ink:#1d1b16;--muted:#6b655a;--line:#e4ddcf;--acc:#b3541e;--acc2:#1e6f5c;--badge:#efe9db;--shadow:0 2px 10px rgba(30,25,15,.08)}
-[data-theme="dark"]{--bg:#141310;--card:#1e1c17;--ink:#f0e9da;--muted:#b3a88f;--line:#38322a;--acc:#f0a35e;--acc2:#5fd0ae;--badge:#2a261f;--shadow:0 2px 12px rgba(0,0,0,.5)}
-[data-theme="contrast"]{--bg:#ffffff;--card:#ffffff;--ink:#000;--muted:#333;--line:#000;--acc:#005fcc;--acc2:#007a3d;--badge:#eef4ff;--shadow:none}
-[data-theme="play"]{--bg:#fff7ed;--card:#fff;--ink:#3b1d5e;--muted:#7a5淳99}
+:root{--bg:#e9e4d4;--paper:#faf7ee;--ink:#1a1814;--muted:#6f675a;--line:#ddd4bf;--acc:#9a3b1e;--acc2:#1e6f5c;--rule:#1a1814;--badge:#f0ebdb;--shadow:none}
+[data-theme="dark"]{--bg:#0f0e0b;--paper:#171612;--ink:#ece4d2;--muted:#a89d86;--line:#3a342a;--acc:#f0a35e;--acc2:#5fd0ae;--rule:#ece4d2;--badge:#24211b}
+[data-theme="contrast"]{--bg:#fff;--paper:#fff;--ink:#000;--muted:#222;--line:#000;--acc:#005fcc;--acc2:#007a3d;--rule:#000;--badge:#eef4ff}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans",sans-serif}
-header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:14px 18px}
-.wrap{max-width:1200px;margin:0 auto;padding:0 18px 60px}
-h1{font-size:1.5rem;margin:.2em 0 .1em}
-.sub{color:var(--muted);font-size:.95rem;max-width:70ch}
-.toolbar{display:grid;gap:10px;margin:16px 0}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;-webkit-font-smoothing:antialiased}
+.paper{max-width:800px;margin:0 auto;background:var(--paper);border-left:1px solid var(--line);border-right:1px solid var(--line);padding:0 clamp(16px,4vw,34px) 60px;min-height:100vh}
+.masthead{text-align:center;padding:26px 0 0}
+.masthead .source{font-size:.78rem;letter-spacing:.35em;text-transform:uppercase;color:var(--muted);margin:0}
+.masthead h1{font-size:clamp(2.6rem,8vw,4.2rem);margin:.08em 0 .1em;font-weight:900;letter-spacing:-.02em;line-height:1}
+.rule-thick{border:0;border-top:4px solid var(--rule);margin:12px 0 0}
+.rule-thin{border:0;border-top:1px solid var(--rule);margin:3px 0 0}
+.edition{display:flex;justify-content:space-between;gap:6px 14px;flex-wrap:wrap;font-size:.8rem;padding:8px 2px;color:var(--muted)}
+.edition strong{color:var(--ink)}
+.lede{font-size:.95rem;color:var(--muted);text-align:center;max-width:60ch;margin:10px auto 0}
+.toolbar{position:sticky;top:0;z-index:5;background:var(--paper);padding:12px 0;border-bottom:1px solid var(--line)}
+.panel{background:var(--paper);border:1px solid var(--line);padding:12px}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-input[type=search],select{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:.95rem}
-input[type=search]{flex:1;min-width:220px}
-label{font-size:.85rem;color:var(--muted)}
+input[type=search],select{background:var(--paper);color:var(--ink);border:1px solid var(--line);padding:9px 12px;font-size:.95rem;font-family:inherit}
+input[type=search]{flex:1;min-width:200px}
+label{font-size:.82rem;color:var(--muted)}
 .chipset{display:flex;flex-wrap:wrap;gap:6px}
-.chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 10px;font-size:.83rem;cursor:pointer;user-select:none}
-.chip[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.btn{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:8px 12px;cursor:pointer;font-size:.9rem}
-.btn.primary{background:var(--acc);border-color:var(--acc);color:#fff}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin-top:14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
-.illus{display:flex;align-items:center;gap:12px;padding:14px;border-bottom:1px dashed var(--line);background:linear-gradient(180deg,transparent,rgba(127,127,127,.08))}
-.product-img{width:96px;height:76px;object-fit:contain;background:#fff;border:1px solid var(--line);border-radius:10px;flex:none}
-.emo{font-size:2.4rem;line-height:1;flex:none;width:64px;height:64px;display:grid;place-items:center;border-radius:14px;background:var(--badge);border:1px solid var(--line)}
-.illus small{color:var(--muted)}
-.body{padding:12px 14px;display:flex;flex-direction:column;gap:8px;flex:1}
-.badges{display:flex;flex-wrap:wrap;gap:6px;font-size:.75rem}
-.b{background:var(--badge);border:1px solid var(--line);border-radius:999px;padding:2px 9px}
-.b.route{font-weight:700}
-.desc{font-size:.92rem}
-.meta{font-size:.8rem;color:var(--muted)}
-.links{margin-top:auto;display:flex;flex-wrap:wrap;gap:8px;padding-top:6px}
-.links a{font-size:.85rem;color:var(--acc2)}
+.chip{border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:4px 10px;font-size:.83rem;cursor:pointer;user-select:none;font-family:inherit}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.btn{border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:8px 12px;cursor:pointer;font-size:.9rem;font-family:inherit}
 .count{font-weight:700}
-footer{color:var(--muted);font-size:.85rem;margin-top:22px}
-.skip{position:absolute;left:-999px}
-.themes{display:flex;gap:6px;flex-wrap:wrap}
+article.story{padding:28px 0;border-bottom:1px solid var(--line)}
+.story-meta{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.story h2{font-size:1.5rem;line-height:1.2;margin:0 0 12px;font-weight:800;letter-spacing:-.01em}
+.story img{width:100%;height:auto;display:block;border:1px solid var(--line);background:#fff}
+.cap{font-size:.78rem;color:var(--muted);margin:6px 0 0}
+.ph{border:1px dashed var(--line);padding:30px 16px;text-align:center;color:var(--muted)}
+.ph .big{font-size:2.6rem}
+.copy{font-size:.98rem;margin:12px 0}
+.links{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.88rem}
+.links a{color:var(--acc2)}
+#sentinel{padding:26px 0 10px;text-align:center;color:var(--muted);font-size:.9rem}
+footer{color:var(--muted);font-size:.85rem;margin-top:26px;border-top:4px solid var(--rule);padding-top:14px}
+.themes{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 details{font-size:.9rem;color:var(--muted)}
 </style>
 </head>
 <body>
-<header><div class="wrap" style="padding:0">
-<h1>🧰 Häkki — Hackable Everything -katalogi</h1>
-<div class="sub">208 laiteriviä <em>list</em>-tiedostosta. ${image_devices} laitemallille löytyi paikallinen Wikimedia Commons -kuva; muissa korteissa näkyy kuvapaikkamerkki ja kuvahaku. Kuvaukset ja lähdelinkit säilytetty alkuperäisestä. Teemat + suodattimet + haku toimivat offline.</div>
-</div></header>
-<div class="wrap">
+<div class="paper">
+<header class="masthead">
+<p class="source">Hackable Everything Field Guide</p>
+<h1>Häkki</h1>
+<hr class="rule-thick"><hr class="rule-thin">
+<div class="edition">
+<span><strong>Vol. I</strong></span>
+<span>12. lokakuuta 2026</span>
+<span><strong>${image_devices}</strong> kuvalla / 208 laitetta</span>
+</div>
+<hr class="rule-thin"><hr class="rule-thick">
+<p class="lede">Robotit, lelut, imurit, kodinkoneet ja unohdettu elektroniikka — kaikki 208 <em>list</em>-tiedoston laiteriviä. Kuvaukset ja lähdelinkit säilytetty alkuperäisestä. Skrollaa loputtomiin.</p>
+</header>
 <div class="toolbar">
 <div class="panel">
 <div class="row">
@@ -176,7 +183,8 @@ details{font-size:.9rem;color:var(--muted)}
 S = ohjelmisto (app/API/BLE/IR/serial, vakiofirmis säilyy) · F = vaihtoehtofirmis/jailbreak · H = hardware (avaa, juota, UART/JTAG, mikrokontrolleri) · E = kokeellinen/epävarma reitti. Vaikeus 1 aloittelija … 5 spesialisti. Kehorooli: laitteen paras rooli kehona (face/voice/mobile/arm/sensor/ambient/mechanism/platform/none).</details>
 </div>
 </div>
-<div class="grid" id="grid"></div>
+<div class="feed" id="grid"></div>
+<div id="sentinel" aria-live="polite"></div>
 <footer>
 <p><strong>Kuvat:</strong> ${image_devices} / 203 yksilöllisestä laitemallista on paikallinen Commons-kuva; ${203-image_devices} jäi ilman varmennettua osumaa ja näytetään paikkamerkkinä. Kortti kertoo kuvan tekijän, lisenssin ja lähdesivun. Käytä kuvia ilmoitetun lisenssin ehdoilla. Muut kortit tarjoavat Wikimedia- ja Openverse-haut.</p>
 <p>Lähde: paikallinen <code>list</code>-tiedosto (12.10.2026). Tätä HTML:ää voi teemata yllä olevilla napeilla; valinta tallentuu selaimeen.</p>
@@ -213,31 +221,53 @@ function match(d){
 }
 function card(d){
  const w=encodeURIComponent(d.device);
- return `<article class="card">
- <div class="illus">${d.image?`<img class="product-img" src="${esc(d.image)}" alt="${esc(d.device)} — ${esc(d.image_title)}" loading="lazy">`:`<div class="emo">${d.emoji}</div>`}<div><strong>${d.cat}. ${esc(d.cat_title).slice(0,60)}</strong><br><small>${d.image?`📷 Commons-kuva: ${esc(d.image_title)}`:`🖼️ Ei varmennettua paikallista laitekuvaa — kuvituspaikka.`}</small></div></div>
- <div class="body">
- <div><strong>#${d.id} ${esc(d.device)}</strong></div>
- <div class="badges"><span class="b route">${esc(d.route)}</span><span class="b">Vaikeus ${esc(d.effort)}</span><span class="b">${esc(d.role)}</span><span class="b">Kat. ${esc(d.cat)}</span></div>
- <div class="desc">${esc(d.what)}</div>
+ const img=d.image
+  ?`<img src="${esc(d.image)}" alt="${esc(d.device)} — ${esc(d.image_title)}" loading="lazy" decoding="async">
+    <p class="cap">📷 ${esc(d.image_title)} — ${esc(d.image_artist||"Commons-tiedot")} (${esc(d.image_license)}). <a href="${esc(d.image_page)}" target="_blank" rel="noopener">Kuvan lähde ↗</a></p>`
+  :`<div class="ph"><div class="big">${d.emoji}</div><p style="font-size:.85rem">Ei varmennettua laitekuvaa — kuvituspaikka.</p></div>`;
+ return `<article class="story">
+ <p class="story-meta">#${d.id} · ${esc(d.cat_title)} · reitti ${esc(d.route)} · vaikeus ${esc(d.effort)} · ${esc(d.role)}</p>
+ <h2>${esc(d.device)}</h2>
+ ${img}
+ <p class="copy">${esc(d.what)}</p>
  <div class="links">
- ${d.url?`<a href="${esc(d.url)}" target="_blank" rel="noopener">📖 Projekti / docs ↗</a>`:`<span class="meta">Ei lähdelinkkiä</span>`}
+ ${d.url?`<a href="${esc(d.url)}" target="_blank" rel="noopener">📖 Projekti / docs ↗</a>`:`<span>Ei lähdelinkkiä</span>`}
  <a href="https://commons.wikimedia.org/w/index.php?search=${w}&title=Special:MediaSearch&type=image" target="_blank" rel="noopener">🖼️ Wikimedia-haku ↗</a>
  <a href="https://openverse.org/search/image?q=${w}" target="_blank" rel="noopener">🖼️ Openverse-haku ↗</a>
  </div>
- <div class="meta">${d.image?`Kuvan tekijä: ${esc(d.image_artist||"Commons-tiedot")}; lisenssi: ${esc(d.image_license)}. <a href="${esc(d.image_page)}" target="_blank" rel="noopener">Kuvan lähde ↗</a>`:`Kuvaa ei löytynyt varmennetusta lähteestä; avaa kuvahaku alta.`} Kuvaus säilytetty list-tiedostosta.</div>
- </div></article>`;
+ </article>`;
 }
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+const PAGE=15;
+let list=[], shown=0;
+const sentinel=$("#sentinel");
 function render(){
- let arr=DATA.filter(match);
- if(state.sort==="name")arr.sort((a,b)=>a.device.localeCompare(b.device,"fi"));
- else if(state.sort==="diff-asc")arr.sort((a,b)=>a.diff-b.diff||a.device.localeCompare(b.device,"fi"));
- else if(state.sort==="diff-desc")arr.sort((a,b)=>b.diff-a.diff||a.device.localeCompare(b.device,"fi"));
- else arr.sort((a,b)=>a.cat.localeCompare(b.cat)||a.device.localeCompare(b.device,"fi"));
- $("#grid").innerHTML=arr.map(card).join("");
- $("#count").textContent=`Näytetään ${arr.length} / ${DATA.length}`;
- $("#hint").textContent=arr.length===0?"— ei osumia, tyhjennä suodattimet.":"";
+ list=DATA.filter(match);
+ if(state.sort==="name")list.sort((a,b)=>a.device.localeCompare(b.device,"fi"));
+ else if(state.sort==="diff-asc")list.sort((a,b)=>a.diff-b.diff||a.device.localeCompare(b.device,"fi"));
+ else if(state.sort==="diff-desc")list.sort((a,b)=>b.diff-a.diff||a.device.localeCompare(b.device,"fi"));
+ else list.sort((a,b)=>a.cat.localeCompare(b.cat)||a.device.localeCompare(b.device,"fi"));
+ shown=0;
+ $("#grid").innerHTML="";
+ appendMore();
 }
+function appendMore(){
+ const next=list.slice(shown,shown+PAGE);
+ if(next.length){
+  $("#grid").insertAdjacentHTML("beforeend",next.map(card).join(""));
+  shown+=next.length;
+ }
+ if(list.length===0){
+  $("#count").textContent="Ei osumia";
+  $("#hint").textContent="— tyhjennä suodattimet.";
+  sentinel.textContent="";
+ }else{
+  $("#count").textContent=`Näytetään ${shown} / ${list.length}`;
+  $("#hint").textContent="";
+  sentinel.textContent=shown<list.length?"Skrollaa — lisää juttuja tulossa…":"— Etusivun loppu —";
+ }
+}
+new IntersectionObserver(es=>{if(es[0].isIntersecting)appendMore();},{rootMargin:"600px"}).observe(sentinel);
 render();
 </script>
 </body>

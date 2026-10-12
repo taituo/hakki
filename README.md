@@ -19,6 +19,8 @@ Paikallinen, offline-toimiva selailukatalogi `list`-tiedoston 208 laiteriville.
 3. Vaihda teemaa: Vaalea / Tumma / Kontrasti (tallentuu selaimeen).
 4. Jokaisesta kortista: kuvaus + lähdelinkki (Projekti/docs) alkuperäiseen dokumentaatioon.
 
+Ulkoasu on sanomalehden etusivu (thefrontpage.dev-henkinen masthead + palstan levyiset kuvat), fontti päätteetön, ja jutut latautuvat erissä skrollatessa (endless scroll, 15 kerrallaan).
+
 ## Kuvat / attribuutio — todellinen tilanne
 
 - **194 / 203 yksilöllisestä laitemallista (208 riviä) on paikallinen Wikimedia Commons -kuva** kansiossa `assets/commons/` (166 tiedostoa; samat mallit jakavat kuvan).
