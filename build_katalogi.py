@@ -91,11 +91,11 @@ js_cats = json.dumps(CAT_META, ensure_ascii=False)
 js_roles = json.dumps(roles_base, ensure_ascii=False)
 
 page = """<!DOCTYPE html>
-<html lang="fi" data-theme="auto">
+<html lang="en" data-theme="auto">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Häkki — Hackable Everything -katalogi (208 laitetta)</title>
+<title>HÄKKI // Hackable Everything — 208 devices</title>
 <style>
 :root{--bg:#e9e4d4;--paper:#faf7ee;--ink:#1a1814;--muted:#6f675a;--line:#ddd4bf;--acc:#9a3b1e;--acc2:#1e6f5c;--rule:#1a1814;--badge:#f0ebdb;--shadow:none}
 [data-theme="dark"]{--bg:#0f0e0b;--paper:#171612;--ink:#ece4d2;--muted:#a89d86;--line:#3a342a;--acc:#f0a35e;--acc2:#5fd0ae;--rule:#ece4d2;--badge:#24211b}
@@ -138,57 +138,58 @@ footer{color:var(--muted);font-size:.85rem;margin-top:26px;border-top:4px solid 
 .themes{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 details{font-size:.9rem;color:var(--muted)}
 </style>
+<link rel="stylesheet" href="hacker-ui.css">
 </head>
 <body>
 <div class="paper">
 <header class="masthead">
-<p class="source">Hackable Everything Field Guide</p>
-<h1>Häkki</h1>
+<p class="source">OPEN DEVICE INTELLIGENCE // FIELD GUIDE</p>
+<h1>HÄKKI<span class="cursor" aria-hidden="true">_</span></h1>
 <hr class="rule-thick"><hr class="rule-thin">
 <div class="edition">
-<span><strong>Vol. I</strong></span>
-<span>12. lokakuuta 2026</span>
-<span><strong>${image_devices}</strong> kuvalla / 208 laitetta</span>
+<span><strong>ARCHIVE / VOL. 01</strong></span>
+<span>12 October 2026</span>
+<span><strong>${image_devices}</strong> images / 208 devices</span>
 </div>
 <hr class="rule-thin"><hr class="rule-thick">
-<p class="lede">Robotit, lelut, imurit, kodinkoneet ja unohdettu elektroniikka — kaikki 208 <em>list</em>-tiedoston laiteriviä. Kuvaukset ja lähdelinkit säilytetty alkuperäisestä. Skrollaa loputtomiin.</p>
+<p class="lede">Robots, toys, vacuums, household devices, and forgotten electronics. Explore 208 moddable machines with original project descriptions, documentation links, and locally cached images. Filter the archive. Find your next target.</p>
 </header>
 <div class="toolbar">
 <div class="panel">
 <div class="row">
-<input id="q" type="search" placeholder="Haku: esim. Furby, Roomba, ESP32, Valetudo…" aria-label="Haku">
-<select id="sort" aria-label="Järjestys">
-<option value="cat">Järjestys: kategoria + nimi</option>
-<option value="diff-asc">Vaikeus: helpoin ensin</option>
-<option value="diff-desc">Vaikeus: vaikein ensin</option>
-<option value="name">Nimi A–Ö</option>
+<input id="q" type="search" placeholder="Search devices / Furby, Roomba, ESP32, Valetudo... (press /)" aria-label="Search devices">
+<select id="sort" aria-label="Sort order">
+<option value="cat">Sort: category + name</option>
+<option value="diff-asc">Difficulty: easiest first</option>
+<option value="diff-desc">Difficulty: hardest first</option>
+<option value="name">Name A–Z</option>
 </select>
-<button class="btn" id="reset">Tyhjennä</button>
+<button class="btn" id="reset">Clear filters</button>
 </div>
 <div class="row" style="margin-top:10px">
-<div class="themes" role="group" aria-label="Teema">
-<label>Teema:</label>
-<button class="btn" data-t="auto">☀️ Vaalea</button>
-<button class="btn" data-t="dark">🌙 Tumma</button>
-<button class="btn" data-t="contrast">🔲 Kontrasti</button>
+<div class="themes" role="group" aria-label="Color palette">
+<label>Palette:</label>
+<button class="btn" data-t="auto">◉ Phosphor</button>
+<button class="btn" data-t="dark">◈ Midnight</button>
+<button class="btn" data-t="contrast">◻ Contrast</button>
 </div>
 <div><span class="count" id="count"></span> <span id="hint"></span></div>
 </div>
 </div>
 <div class="panel">
-<div class="row"><label>Kategoria</label><select id="fcat"><option value="">Kaikki (A–K)</option></select></div>
-<div class="row" style="margin-top:8px"><label>Reitti:</label><div class="chipset" id="routes"></div></div>
-<div class="row" style="margin-top:8px"><label>Vaikeus:</label><div class="chipset" id="diffs"></div></div>
-<div class="row" style="margin-top:8px"><label>Kehorooli:</label><div class="chipset" id="roles"></div></div>
-<details style="margin-top:8px"><summary>Reittien selitykset (S/F/H/E)</summary>
-S = ohjelmisto (app/API/BLE/IR/serial, vakiofirmis säilyy) · F = vaihtoehtofirmis/jailbreak · H = hardware (avaa, juota, UART/JTAG, mikrokontrolleri) · E = kokeellinen/epävarma reitti. Vaikeus 1 aloittelija … 5 spesialisti. Kehorooli: laitteen paras rooli kehona (face/voice/mobile/arm/sensor/ambient/mechanism/platform/none).</details>
+<div class="row"><label>Category</label><select id="fcat"><option value="">All sectors (A–K)</option></select></div>
+<div class="row" style="margin-top:8px"><label>Access route:</label><div class="chipset" id="routes"></div></div>
+<div class="row" style="margin-top:8px"><label>Difficulty:</label><div class="chipset" id="diffs"></div></div>
+<div class="row" style="margin-top:8px"><label>Body role:</label><div class="chipset" id="roles"></div></div>
+<details style="margin-top:8px"><summary>How access routes work (S/F/H/E)</summary>
+S = software (app/API/BLE/IR/serial, stock firmware remains). F = alternative firmware or jailbreak. H = hardware (open, solder, UART/JTAG, microcontrollers). E = experimental or unverified route. Difficulty: 1 = beginner, 5 = specialist. Body role = best use of the device as an interactive body (face/voice/mobile/arm/sensor/ambient/mechanism/platform/none).</details>
 </div>
 </div>
 <div class="feed" id="grid"></div>
 <div id="sentinel" aria-live="polite"></div>
 <footer>
-<p><strong>Kuvat:</strong> ${image_devices} / 203 yksilöllisestä laitemallista on paikallinen Commons-kuva; ${203-image_devices} jäi ilman varmennettua osumaa ja näytetään paikkamerkkinä. Kortti kertoo kuvan tekijän, lisenssin ja lähdesivun. Käytä kuvia ilmoitetun lisenssin ehdoilla. Kuvattomissa korteissa on kuvahaku.</p>
-<p>Lähde: paikallinen <code>list</code>-tiedosto (12.10.2026). Tätä HTML:ää voi teemata yllä olevilla napeilla; valinta tallentuu selaimeen.</p>
+<p><strong>Images:</strong> ${image_devices} / 203 unique device models have a locally stored Commons image; ${203-image_devices} have no verified image and display a placeholder. Each image credits its author, license and source. Reuse images only under their stated licenses; missing images have a search link.</p>
+<p>Source: local <code>list</code> file (12 October 2026). The interface works offline with the original image assets. Palette and density choices are stored in your browser.</p>
 </footer>
 </div>
 <script>
@@ -224,16 +225,16 @@ function card(d){
  const w=encodeURIComponent(d.device);
  const img=d.image
   ?`<img src="${esc(d.image)}" alt="${esc(d.device)} — ${esc(d.image_title)}" loading="lazy" decoding="async">
-    <p class="cap">${esc(d.image_title)} · ${esc(d.image_artist||"Commons")} (${esc(d.image_license)}) <a href="${esc(d.image_page)}" target="_blank" rel="noopener">lähde ↗</a></p>`
+    <p class="cap">${esc(d.image_title)} · ${esc(d.image_artist||"Commons")} (${esc(d.image_license)}) <a href="${esc(d.image_page)}" target="_blank" rel="noopener">source ↗</a></p>`
   :`<div class="ph"><div class="big">${d.emoji}</div></div>`;
- const extra=d.image?"":` <a href="https://commons.wikimedia.org/w/index.php?search=${w}&title=Special:MediaSearch&type=image" target="_blank" rel="noopener">🔍 kuvahaku ↗</a>`;
+ const extra=d.image?"":` <a href="https://commons.wikimedia.org/w/index.php?search=${w}&title=Special:MediaSearch&type=image" target="_blank" rel="noopener">🔍 image search ↗</a>`;
  return `<article class="story">
  <p class="story-meta">#${d.id} · ${esc(d.cat_title)} · ${esc(d.route)} · ${esc(d.effort)} · ${esc(d.role)}</p>
  <h2>${esc(d.device)}</h2>
  ${img}
  <p class="copy">${esc(d.what)}</p>
  <div class="links">
- ${d.url?`<a href="${esc(d.url)}" target="_blank" rel="noopener">📖 Projekti ↗</a>`:`<span>Ei lähdelinkkiä</span>`}${extra}
+ ${d.url?`<a href="${esc(d.url)}" target="_blank" rel="noopener">↗ Project / docs</a>`:`<span>No source link</span>`}${extra}
  </div>
  </article>`;
 }
@@ -243,10 +244,10 @@ let list=[], shown=0;
 const sentinel=$("#sentinel");
 function render(){
  list=DATA.filter(match);
- if(state.sort==="name")list.sort((a,b)=>a.device.localeCompare(b.device,"fi"));
- else if(state.sort==="diff-asc")list.sort((a,b)=>a.diff-b.diff||a.device.localeCompare(b.device,"fi"));
- else if(state.sort==="diff-desc")list.sort((a,b)=>b.diff-a.diff||a.device.localeCompare(b.device,"fi"));
- else list.sort((a,b)=>a.cat.localeCompare(b.cat)||a.device.localeCompare(b.device,"fi"));
+ if(state.sort==="name")list.sort((a,b)=>a.device.localeCompare(b.device,"en"));
+ else if(state.sort==="diff-asc")list.sort((a,b)=>a.diff-b.diff||a.device.localeCompare(b.device,"en"));
+ else if(state.sort==="diff-desc")list.sort((a,b)=>b.diff-a.diff||a.device.localeCompare(b.device,"en"));
+ else list.sort((a,b)=>a.cat.localeCompare(b.cat)||a.device.localeCompare(b.device,"en"));
  shown=0;
  $("#grid").innerHTML="";
  appendMore();
@@ -258,18 +259,19 @@ function appendMore(){
   shown+=next.length;
  }
  if(list.length===0){
-  $("#count").textContent="Ei osumia";
-  $("#hint").textContent="— tyhjennä suodattimet.";
+  $("#count").textContent="No matches";
+  $("#hint").textContent="— change or clear filters.";
   sentinel.textContent="";
  }else{
-  $("#count").textContent=`Näytetään ${shown} / ${list.length}`;
+  $("#count").textContent=`Showing ${shown} / ${list.length}`;
   $("#hint").textContent="";
-  sentinel.textContent=shown<list.length?"Skrollaa — lisää juttuja tulossa…":"— Etusivun loppu —";
+  sentinel.textContent=shown<list.length?"Scroll to load more devices...":"— End of index —";
  }
 }
 new IntersectionObserver(es=>{if(es[0].isIntersecting)appendMore();},{rootMargin:"600px"}).observe(sentinel);
 render();
 </script>
+<script src="hacker-ui.js"></script>
 </body>
 </html>
 """

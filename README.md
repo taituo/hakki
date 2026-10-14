@@ -1,46 +1,48 @@
-# Häkki — HTML-katalogi
+# HÄKKI — Hackable Everything Device Index
 
-Paikallinen, offline-toimiva selailukatalogi `list`-tiedoston 208 laiteriville.
+An offline-friendly, filterable field guide to **208 hackable devices**, rebuilt as a responsive terminal-inspired catalog. No build tools, third-party UI libraries, remote fonts, or image hotlinking are required.
 
-## Tiedostot
+## Files
 
-- `katalogi.html` — valmis katalogi (yksi HTML + paikallinen `assets/`-kansio, ei ulkoisia resursseja)
-- `assets/commons/` — ladatut Wikimedia Commons -pikkukuvat + `images.json` (attribuutio- ja lisenssimetadata)
-- `list` — lähde (älä muuta; katalogi lukee siitä kuvaukset ja linkit rakennusvaiheessa)
-- `build_katalogi.py` — generaattori, jolla `katalogi.html` on tehty
-- `fetch_commons.py` — Commons-haku (API + lisenssit + lataus, osuvuussuodatus, poissulkulista)
-- `manual_add.py` — käsin kuratoidut täydennykset
-- `README.md` — tämä ohje
+- `index.html` — GitHub Pages entry point.
+- `katalogi.html` — generated catalog for local browsing.
+- `hacker-ui.css` — all the styling, palettes, responsive grid, and visual design tokens.
+- `hacker-ui.js` — enhanced card metadata, compact-view toggle, random target, keyboard shortcuts, and live status.
+- `assets/commons/` — local Wikimedia Commons thumbnails plus credit/license metadata.
+- `list` — source catalog; descriptions and links are preserved.
+- `build_katalogi.py` — catalog generator; patched to keep English UI and load the custom files.
+- `fetch_commons.py` and `manual_add.py` — image import/curation utilities.
 
-## Käyttö
+## Use
 
-1. Avaa `katalogi.html` selaimessa (tuplaklikkaa tai `python3 -m http.server` + selaimeen `http://127.0.0.1:PORT/katalogi.html`).
-2. Hae tekstillä, suodata kategorialla (A–K), reitillä (S/F/H/E), vaikeudella (1–5) ja kehoroolilla.
-3. Vaihda teemaa: Vaalea / Tumma / Kontrasti (tallentuu selaimeen).
-4. Jokaisesta kortista: kuvaus + lähdelinkki (Projekti/docs) alkuperäiseen dokumentaatioon.
+Open `index.html` locally or serve the repository with `python3 -m http.server 8000` and visit `http://localhost:8000/`. Search by name or topic; filter by category (A–K), access route (S/F/H/E), difficulty (1–5), or body role. The archive loads 15 cards at a time as you scroll.
 
-Ulkoasu on sanomalehden etusivu (thefrontpage.dev-henkinen masthead + palstan levyiset kuvat), fontti päätteetön, ja jutut latautuvat erissä skrollatessa (endless scroll, 15 kerrallaan).
+Press **/** or **Ctrl/⌘ + K** to focus search. Press **Escape** to clear it. Use **RANDOM TARGET** to jump to a random device from the current filters, **COMPACT** to change card density, and the palette buttons for Phosphor / Midnight / High Contrast. Appearance preferences are saved locally.
 
-## Kuvat / attribuutio — todellinen tilanne
+## Access routes
 
-- **194 / 203 yksilöllisestä laitemallista (208 riviä) on paikallinen Wikimedia Commons -kuva** kansiossa `assets/commons/` (166 tiedostoa; samat mallit jakavat kuvan).
-- **9 mallia jäi ilman varmennettua osumaa ja näytetään selkeänä placeholderina** (`Kuva puuttuu` -merkintä kortissa): WowWee MiP, Petoi Bittle/Nybble (legacy + X), Korg NTS-1, Duet/RepRapFirmware, FluidNC, Crazyflie 2.x, EdgeTX-lähettimet, yleiset tietoturvetietokoneet. Näille korteissa on Wikimedia/Openverse-haut.
-- Jokaista kuvaa käytetään vain, jos Commons-tiedoston nimi täsmää laitteen tunnisteeseen (token-osuvuus + poissulkulista ihmisille, paikoille, eläimille, ajoneuvoille ja väärille malleille). Kortti näyttää aina todellisen Commons-tiedostonimen, tekijän, lisenssin ja lähdesivun — placeholderia ei koskaan väitetä tuotekuvaksi.
-- **Tarkista kuvan lisenssi (`images.json`: `license`, `license_url`) ennen uudelleenkäyttöä ja merkitse tekijä.** Osa kuvista on esim. CC BY-SA -lisenssillä.
-- Kuvat on haettu Commons APIsta (hakutulokset + `extmetadata`-lisenssit) ja ladattu paikallisesti 320–640px pikkukuvina; ei hotlinkkausta.
+- **S:** software-controlled interaction (app, API, Bluetooth LE, IR, serial); stock firmware remains.
+- **F:** alternative firmware, jailbreak, or software replacement.
+- **H:** hardware intervention, soldering, UART/JTAG, microcontrollers, etc.
+- **E:** experimental or uncertain routes.
 
-## Uudelleenrakennus
+Difficulty **1** is beginner-friendly; **5** is specialist-level. Body role describes whether a device is best used for expression, sound, sensing, movement, or computing.
 
-```bash
-python3 fetch_commons.py     # päivittää assets/commons/images.json (verkko + kohteliaisuusviiveet)
-python3 manual_add.py        # kuratoidut täydennykset
-python3 build_katalogi.py    # kirjoittaa katalogi.html uudelleen
+## Image licensing
+
+Of the 203 unique device models across 208 rows, 194 have a verified local Commons image; 9 use placeholders. Images are associated with author, license and source-page credits. Always follow the respective license for reuse; licenses vary and may require attribution or ShareAlike.
+
+## Rebuild
+
+```sh
+python3 fetch_commons.py  # network; refresh Commons images and metadata
+python3 manual_add.py     # curated additions
+python3 build_katalogi.py # regenerate katalogi.html
+cp katalogi.html index.html  # update Pages entry point after a rebuild
 ```
 
-Lukee `list`-tiedoston katalogiosion (`## The catalog` … `## Tools`). Ei koske `list`-lähdettä.
+The generator reads the `## The catalog` section of `list` and leaves the source catalog unchanged. Local images are used for the rendered cards; project and image-search links can open external sites when clicked.
 
-## Testit
+## Deploy
 
-- Rivimäärä: `list`-katalogiosiossa 208 taulukkoriviä → `katalogi.html` sisältää 208 korttia (`DATA`-taulukko).
-- Kaikilla 208 rivillä on kuvaus + lähdelinkki; kuvatiedostot tarkistettu (JPEG/PNG/WebP-magic, ei virussivuja).
-- Offline: ei `<link>`/`<script src>`/`img src=http>`-riippuvuuksia; kuvat ovat paikallisia `assets/`-polkuja (vain projekti/kuvahaut-linkit vievät ulos).
+Commit `index.html`, `katalogi.html`, `hacker-ui.css`, `hacker-ui.js`, `build_katalogi.py` and the existing `assets/` files together so the new UI has all its resources. The new theme intentionally retains the original data and attribution links.
