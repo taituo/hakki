@@ -122,16 +122,16 @@ label{font-size:.82rem;color:var(--muted)}
 .chip[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .btn{border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:8px 12px;cursor:pointer;font-size:.9rem;font-family:inherit}
 .count{font-weight:700}
-article.story{padding:24px 0;border-bottom:1px solid var(--line);break-inside:avoid}
-.feed{columns:320px;column-gap:30px}
-.story-meta{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
-.story h2{font-size:1.5rem;line-height:1.2;margin:0 0 12px;font-weight:800;letter-spacing:-.01em}
+article.story{padding:15px 0;border-bottom:1px solid var(--line);break-inside:avoid}
+.feed{columns:255px;column-gap:20px}
+.story-meta{font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 5px}
+.story h2{font-size:1.08rem;line-height:1.25;margin:0 0 8px;font-weight:800;letter-spacing:-.01em}
 .story img{width:100%;height:auto;display:block;border:1px solid var(--line);background:#fff}
-.cap{font-size:.78rem;color:var(--muted);margin:6px 0 0}
-.ph{border:1px dashed var(--line);padding:30px 16px;text-align:center;color:var(--muted)}
-.ph .big{font-size:2.6rem}
-.copy{font-size:.98rem;margin:12px 0}
-.links{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.88rem}
+.cap{font-size:.7rem;color:var(--muted);margin:5px 0 0}
+.ph{border:1px dashed var(--line);padding:18px 12px;text-align:center;color:var(--muted)}
+.ph .big{font-size:2rem}
+.copy{font-size:.83rem;line-height:1.5;margin:8px 0}
+.links{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.78rem}
 .links a{color:var(--acc2)}
 #sentinel{padding:26px 0 10px;text-align:center;color:var(--muted);font-size:.9rem}
 footer{color:var(--muted);font-size:.85rem;margin-top:26px;border-top:4px solid var(--rule);padding-top:14px}
@@ -187,7 +187,7 @@ S = ohjelmisto (app/API/BLE/IR/serial, vakiofirmis säilyy) · F = vaihtoehtofir
 <div class="feed" id="grid"></div>
 <div id="sentinel" aria-live="polite"></div>
 <footer>
-<p><strong>Kuvat:</strong> ${image_devices} / 203 yksilöllisestä laitemallista on paikallinen Commons-kuva; ${203-image_devices} jäi ilman varmennettua osumaa ja näytetään paikkamerkkinä. Kortti kertoo kuvan tekijän, lisenssin ja lähdesivun. Käytä kuvia ilmoitetun lisenssin ehdoilla. Muut kortit tarjoavat Wikimedia- ja Openverse-haut.</p>
+<p><strong>Kuvat:</strong> ${image_devices} / 203 yksilöllisestä laitemallista on paikallinen Commons-kuva; ${203-image_devices} jäi ilman varmennettua osumaa ja näytetään paikkamerkkinä. Kortti kertoo kuvan tekijän, lisenssin ja lähdesivun. Käytä kuvia ilmoitetun lisenssin ehdoilla. Kuvattomissa korteissa on kuvahaku.</p>
 <p>Lähde: paikallinen <code>list</code>-tiedosto (12.10.2026). Tätä HTML:ää voi teemata yllä olevilla napeilla; valinta tallentuu selaimeen.</p>
 </footer>
 </div>
@@ -224,17 +224,16 @@ function card(d){
  const w=encodeURIComponent(d.device);
  const img=d.image
   ?`<img src="${esc(d.image)}" alt="${esc(d.device)} — ${esc(d.image_title)}" loading="lazy" decoding="async">
-    <p class="cap">📷 ${esc(d.image_title)} — ${esc(d.image_artist||"Commons-tiedot")} (${esc(d.image_license)}). <a href="${esc(d.image_page)}" target="_blank" rel="noopener">Kuvan lähde ↗</a></p>`
-  :`<div class="ph"><div class="big">${d.emoji}</div><p style="font-size:.85rem">Ei varmennettua laitekuvaa — kuvituspaikka.</p></div>`;
+    <p class="cap">${esc(d.image_title)} · ${esc(d.image_artist||"Commons")} (${esc(d.image_license)}) <a href="${esc(d.image_page)}" target="_blank" rel="noopener">lähde ↗</a></p>`
+  :`<div class="ph"><div class="big">${d.emoji}</div></div>`;
+ const extra=d.image?"":` <a href="https://commons.wikimedia.org/w/index.php?search=${w}&title=Special:MediaSearch&type=image" target="_blank" rel="noopener">🔍 kuvahaku ↗</a>`;
  return `<article class="story">
- <p class="story-meta">#${d.id} · ${esc(d.cat_title)} · reitti ${esc(d.route)} · vaikeus ${esc(d.effort)} · ${esc(d.role)}</p>
+ <p class="story-meta">#${d.id} · ${esc(d.cat_title)} · ${esc(d.route)} · ${esc(d.effort)} · ${esc(d.role)}</p>
  <h2>${esc(d.device)}</h2>
  ${img}
  <p class="copy">${esc(d.what)}</p>
  <div class="links">
- ${d.url?`<a href="${esc(d.url)}" target="_blank" rel="noopener">📖 Projekti / docs ↗</a>`:`<span>Ei lähdelinkkiä</span>`}
- <a href="https://commons.wikimedia.org/w/index.php?search=${w}&title=Special:MediaSearch&type=image" target="_blank" rel="noopener">🖼️ Wikimedia-haku ↗</a>
- <a href="https://openverse.org/search/image?q=${w}" target="_blank" rel="noopener">🖼️ Openverse-haku ↗</a>
+ ${d.url?`<a href="${esc(d.url)}" target="_blank" rel="noopener">📖 Projekti ↗</a>`:`<span>Ei lähdelinkkiä</span>`}${extra}
  </div>
  </article>`;
 }
